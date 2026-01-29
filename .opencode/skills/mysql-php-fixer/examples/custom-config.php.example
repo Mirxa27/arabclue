@@ -1,0 +1,69 @@
+<?php
+/**
+ * Example Custom PHP Database Configuration
+ * DO NOT commit actual credentials to version control
+ */
+
+class DatabaseConfig {
+    // Database connection settings
+    private static $host = 'localhost';
+    private static $port = 3306;
+    private static $database = 'myapp_database';
+    private static $username = 'db_user';
+    private static $password = 'secure_password';
+    
+    // Connection options
+    private static $charset = 'utf8mb4';
+    private static $collation = 'utf8mb4_unicode_ci';
+    
+    /**
+     * Get PDO connection string
+     */
+    public static function getDSN() {
+        return sprintf(
+            'mysql:host=%s;port=%d;dbname=%s;charset=%s',
+            self::$host,
+            self::$port,
+            self::$database,
+            self::$charset
+        );
+    }
+    
+    /**
+     * Get database credentials
+     */
+    public static function getCredentials() {
+        return [
+            'host' => self::$host,
+            'port' => self::$port,
+            'database' => self::$database,
+            'username' => self::$username,
+            'password' => self::$password,
+            'charset' => self::$charset,
+            'collation' => self::$collation,
+        ];
+    }
+    
+    /**
+     * Create PDO connection
+     */
+    public static function getConnection() {
+        try {
+            $pdo = new PDO(
+                self::getDSN(),
+                self::$username,
+                self::$password,
+                [
+                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                    PDO::ATTR_EMULATE_PREPARES => false,
+                ]
+            );
+            
+            return $pdo;
+        } catch (PDOException $e) {
+            error_log('Database connection failed: ' . $e->getMessage());
+            die('Database connection failed. Please check your configuration.');
+        }
+    }
+}

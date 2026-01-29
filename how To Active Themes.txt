@@ -1,0 +1,23 @@
+1- Extract Themes.zip into the project's main folder
+2- Execute the following SQL queries on your database
+
+INSERT INTO `extensions` (`id`, `version`, `slug`, `installed`, `created_at`, `updated_at`, `is_theme`) VALUES
+(17, '2.7', 'classic', 1, '2024-07-23 10:48:22', '2024-07-23 10:48:22', 1),
+(18, '2.7', 'creative', 1, '2024-07-23 10:48:22', '2024-07-23 10:48:22', 1),
+(20, '1', 'default', 0, '2024-07-23 10:48:22', '2024-07-23 10:48:22', 1);
+
+3- Change the values ​​front_theme and dash_theme from within the app_settings table to the theme name you want
+
+front Names 
+- creative
+- default
+- dark - Not included in this deal
+
+dash Names
+- classic
+- default
+- sleek - Not included in this deal
+
+INSERT INTO `app_settings` (`id`, `key`, `value`) VALUES
+(1, 'front_theme', 'creative'),
+(2, 'dash_theme', 'classic');

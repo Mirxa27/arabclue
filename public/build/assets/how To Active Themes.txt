@@ -1,0 +1,25 @@
+1- Extract Themes.zip into the project's main folder
+2- Execute the following SQL queries on your database
+
+3- Change the values ​​front_theme and dash_theme from within the app_settings table to the theme name you want
+
+front Names 
+-  modern
+- dark
+- creative
+- social-media-frontend
+- default
+
+
+dash Names
+- classic
+- bolt
+- social-media-dashboard
+- default
+- sleek 
+
+
+
+Like This
+(1, 'front_theme', 'creative'),
+(2, 'dash_theme', 'classic');

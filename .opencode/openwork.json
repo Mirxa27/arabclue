@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "workspace": {
+    "name": "starter",
+    "createdAt": 1768630507656,
+    "preset": "starter"
+  },
+  "authorizedRoots": [
+    "/Users/abdullahmirxa/Library/Application Support/com.differentai.openwork/workspaces/starter",
+    "/Users/abdullahmirxa",
+    "/Users/abdullahmirxa/Desktop",
+    "/Users/abdullahmirxa/Documents",
+    "/Applications"
+  ]
+}

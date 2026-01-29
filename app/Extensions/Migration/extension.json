@@ -1,0 +1,6 @@
+{
+    "name": "Migration",
+    "type": "extension",
+    "version": "1.2.0",
+    "description": "Migration extension for magicai"
+}
