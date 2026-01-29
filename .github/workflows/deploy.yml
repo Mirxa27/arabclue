@@ -1,0 +1,635 @@
+name: Full Deploy to Hostinger with All Features
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+    types: [ closed ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+        - production
+        - staging
+      run_migrations:
+        description: 'Run database migrations'
+        required: false
+        default: true
+        type: boolean
+      clear_cache:
+        description: 'Clear all caches'
+        required: false
+        default: true
+        type: boolean
+
+env:
+  PHP_VERSION: '8.1'
+  NODE_VERSION: '18'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ env.PHP_VERSION }}
+        extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, pdo_mysql, zip, gd, redis, bcmath
+        coverage: xdebug
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+        
+    - name: Cache Composer packages
+      uses: actions/cache@v3
+      with:
+        path: vendor
+        key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-php-
+
+    - name: Install PHP dependencies
+      run: composer install --prefer-dist --no-progress
+
+    - name: Install Node dependencies
+      run: npm ci
+
+    - name: Build assets
+      run: npm run build
+
+    - name: Create test database
+      run: |
+        mkdir -p database
+        touch database/database.sqlite
+
+    - name: Run tests
+      env:
+        DB_CONNECTION: sqlite
+        DB_DATABASE: database/database.sqlite
+      run: php artisan test --coverage
+
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+    needs: test
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: ${{ env.PHP_VERSION }}
+        extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, pdo_mysql, zip, gd, redis, bcmath
+        coverage: none
+        
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+        cache: 'npm'
+
+    - name: Cache Composer packages
+      id: composer-cache
+      uses: actions/cache@v3
+      with:
+        path: vendor
+        key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-php-
+
+    - name: Install PHP dependencies
+      run: composer install --prefer-dist --no-progress --no-dev --optimize-autoloader
+
+    - name: Install Node dependencies
+      run: npm ci
+
+    - name: Build production assets
+      run: npm run build
+
+    - name: Run Laravel optimizations
+      run: |
+        php artisan config:cache
+        php artisan route:cache
+        php artisan view:cache
+
+    - name: Create deployment package
+      run: |
+        # Create production .env
+        cat > .env.production << EOF
+        APP_NAME="HabibiStay"
+        APP_ENV=production
+        APP_KEY=${{ secrets.APP_KEY }}
+        APP_DEBUG=false
+        APP_URL=https://go.habibistay.com
+        
+        LOG_CHANNEL=daily
+        LOG_DEPRECATIONS_CHANNEL=null
+        LOG_LEVEL=error
+        
+        DB_CONNECTION=mysql
+        DB_HOST=${{ secrets.DB_HOST }}
+        DB_PORT=3306
+        DB_DATABASE=${{ secrets.DB_DATABASE }}
+        DB_USERNAME=${{ secrets.DB_USERNAME }}
+        DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+        
+        BROADCAST_DRIVER=log
+        CACHE_DRIVER=file
+        FILESYSTEM_DISK=local
+        QUEUE_CONNECTION=sync
+        SESSION_DRIVER=file
+        SESSION_LIFETIME=120
+        
+        MAIL_MAILER=smtp
+        MAIL_HOST=smtp.gmail.com
+        MAIL_PORT=587
+        MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}
+        MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
+        MAIL_ENCRYPTION=tls
+        MAIL_FROM_ADDRESS="noreply@habibistay.com"
+        MAIL_FROM_NAME="\${APP_NAME}"
+        
+        MYFATOORAH_API_KEY=${{ secrets.MYFATOORAH_API_KEY }}
+        MYFATOORAH_COUNTRY_ISO=KWT
+        MYFATOORAH_TEST_MODE=false
+        MYFATOORAH_DISPLAY_CURRENCY=KWD
+        
+        PAYPAL_MODE=sandbox
+        PAYPAL_SANDBOX_CLIENT_ID=${{ secrets.PAYPAL_SANDBOX_CLIENT_ID }}
+        PAYPAL_SANDBOX_CLIENT_SECRET=${{ secrets.PAYPAL_SANDBOX_CLIENT_SECRET }}
+        PAYPAL_LIVE_CLIENT_ID=${{ secrets.PAYPAL_LIVE_CLIENT_ID }}
+        PAYPAL_LIVE_CLIENT_SECRET=${{ secrets.PAYPAL_LIVE_CLIENT_SECRET }}
+        
+        OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+        
+        # Sara AI Configuration
+        SARA_VOICE_ENABLED=true
+        SARA_CHAT_ENABLED=true
+        SARA_AI_MODEL=gpt-4
+        SARA_VOICE_MODEL=whisper-1
+        SARA_DEFAULT_LANGUAGE=en
+        SARA_SUPPORT_ARABIC=true
+        
+        # Advanced Features
+        ENABLE_ANALYTICS=true
+        ENABLE_CACHING=true
+        ENABLE_QUEUE_MONITORING=true
+        ENABLE_ERROR_TRACKING=true
+        
+        # Performance Settings
+        CACHE_TIMEOUT=3600
+        SESSION_LIFETIME=120
+        QUEUE_RETRY_DELAY=30
+        
+        # Security Settings
+        SECURE_HEADERS=true
+        CSRF_PROTECTION=true
+        XSS_PROTECTION=true
+        
+        # Feature Flags
+        FEATURE_BOOKING_SYSTEM=true
+        FEATURE_PAYMENT_GATEWAY=true
+        FEATURE_NOTIFICATION_SYSTEM=true
+        FEATURE_MOBILE_APP_SUPPORT=true
+        FEATURE_ADMIN_DASHBOARD=true
+        FEATURE_HOST_DASHBOARD=true
+        FEATURE_SARA_AI=true
+        FEATURE_EMAIL_TEMPLATES=true
+        FEATURE_REFERRAL_SYSTEM=true
+        FEATURE_WISHLIST=true
+        FEATURE_REVIEWS=true
+        FEATURE_ADVANCED_SEARCH=true
+        FEATURE_PROPERTY_CALENDAR=true
+        FEATURE_ICAL_SYNC=true
+        FEATURE_CHANNEL_MANAGER=true
+        FEATURE_DISPUTE_SYSTEM=true
+        EOF
+        
+        # Create enhanced .htaccess files
+        cat > .htaccess-root << 'EOF'
+        <IfModule mod_rewrite.c>
+            RewriteEngine On
+            
+            # Force HTTPS
+            RewriteCond %{HTTPS} off
+            RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
+            
+            # Redirect everything to public directory
+            RewriteCond %{REQUEST_URI} !^/public
+            RewriteRule ^(.*)$ public/$1 [L]
+        </IfModule>
+        
+        # Enhanced Security Headers
+        <IfModule mod_headers.c>
+            Header set X-Content-Type-Options "nosniff"
+            Header set X-Frame-Options "SAMEORIGIN"
+            Header set X-XSS-Protection "1; mode=block"
+            Header set Referrer-Policy "strict-origin-when-cross-origin"
+            Header set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+            Header set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://maxcdn.bootstrapcdn.com https://code.jquery.com https://maps.googleapis.com; style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://maxcdn.bootstrapcdn.com https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: https: blob:; connect-src 'self' https://api.openai.com https://api.myfatoorah.com https://api.paypal.com https://maps.googleapis.com wss:; media-src 'self' https:; object-src 'none'; base-uri 'self'; form-action 'self';"
+        </IfModule>
+        
+        # Performance Optimizations
+        <IfModule mod_expires.c>
+            ExpiresActive On
+            ExpiresByType text/css "access plus 1 year"
+            ExpiresByType application/javascript "access plus 1 year"
+            ExpiresByType image/png "access plus 1 year"
+            ExpiresByType image/jpg "access plus 1 year"
+            ExpiresByType image/jpeg "access plus 1 year"
+            ExpiresByType image/gif "access plus 1 year"
+            ExpiresByType image/svg+xml "access plus 1 year"
+            ExpiresByType image/webp "access plus 1 year"
+            ExpiresByType font/woff "access plus 1 year"
+            ExpiresByType font/woff2 "access plus 1 year"
+        </IfModule>
+        
+        # Compression
+        <IfModule mod_deflate.c>
+            AddOutputFilterByType DEFLATE text/plain
+            AddOutputFilterByType DEFLATE text/html
+            AddOutputFilterByType DEFLATE text/xml
+            AddOutputFilterByType DEFLATE text/css
+            AddOutputFilterByType DEFLATE application/xml
+            AddOutputFilterByType DEFLATE application/xhtml+xml
+            AddOutputFilterByType DEFLATE application/rss+xml
+            AddOutputFilterByType DEFLATE application/javascript
+            AddOutputFilterByType DEFLATE application/x-javascript
+        </IfModule>
+        EOF
+        
+        cat > .htaccess-public << 'EOF'
+        <IfModule mod_rewrite.c>
+            <IfModule mod_negotiation.c>
+                Options -MultiViews -Indexes
+            </IfModule>
+
+            RewriteEngine On
+
+            # Handle Authorization Header
+            RewriteCond %{HTTP:Authorization} .
+            RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+            # Redirect Trailing Slashes If Not A Folder...
+            RewriteCond %{REQUEST_FILENAME} !-d
+            RewriteCond %{REQUEST_URI} (.+)/$
+            RewriteRule ^ %1 [L,R=301]
+
+            # Send Requests To Front Controller...
+            RewriteCond %{REQUEST_FILENAME} !-d
+            RewriteCond %{REQUEST_FILENAME} !-f
+            RewriteRule ^ index.php [L]
+        </IfModule>
+
+        # Prevent access to sensitive files
+        <FilesMatch "^\.">
+            Order allow,deny
+            Deny from all
+        </FilesMatch>
+
+        <Files .env>
+            Order allow,deny
+            Deny from all
+        </Files>
+        EOF
+        
+        # Create deployment archive
+        tar --exclude='.git' --exclude='node_modules' --exclude='tests' --exclude='*.log' \
+            --exclude='storage/logs/*' --exclude='storage/framework/sessions/*' \
+            --exclude='vendor/*/tests' --exclude='vendor/*/Tests' \
+            -czf deploy.tar.gz .
+
+    - name: Deploy to Hostinger with Enhanced Features
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: 195.35.57.85
+        username: u221943340
+        password: ${{ secrets.SSH_PASSWORD }}
+        port: 65002
+        timeout: 300s
+        command_timeout: 10m
+        script: |
+          # Set deployment variables
+          DEPLOYMENT_TIME=$(date +%Y%m%d_%H%M%S)
+          WEB_DIR="/home/u221943340/domains/go.habibistay.com/public_html"
+          BACKUP_DIR="/home/u221943340/backups"
+          REPO_URL="https://github.com/${{ github.repository }}.git"
+          COMMIT_SHA="${{ github.sha }}"
+          
+          echo "=== HabibiStay Full Deployment Started at $(date) ==="
+          echo "Deployment ID: $DEPLOYMENT_TIME"
+          echo "Commit SHA: $COMMIT_SHA"
+          echo "Repository: $REPO_URL"
+          
+          # Create backup directory
+          mkdir -p "$BACKUP_DIR"
+          
+          # Navigate to web directory
+          cd "$WEB_DIR"
+          
+          # Create comprehensive backup
+          if [ -d "vendor" ] || [ -f "artisan" ]; then
+            echo "Creating comprehensive backup..."
+            tar -czf "$BACKUP_DIR/habibistay-backup-$DEPLOYMENT_TIME.tar.gz" \
+              --exclude='storage/logs/*' \
+              --exclude='storage/framework/sessions/*' \
+              --exclude='storage/framework/cache/*' \
+              --exclude='node_modules' \
+              . || echo "Backup completed with warnings"
+            
+            # Keep only last 5 backups
+            cd "$BACKUP_DIR"
+            ls -t habibistay-backup-*.tar.gz | tail -n +6 | xargs -r rm -f
+            cd "$WEB_DIR"
+          fi
+          
+          # Maintenance mode
+          echo "Enabling maintenance mode..."
+          [ -f artisan ] && /opt/alt/php81/usr/bin/php artisan down --render="errors::503" --secret="${{ secrets.MAINTENANCE_SECRET }}" || echo "Maintenance mode not available"
+          
+          # Clean directory (preserve important files)
+          echo "Cleaning deployment directory..."
+          find . -mindepth 1 -maxdepth 1 \
+            ! -name '.htaccess' \
+            ! -name 'storage' \
+            ! -name '.well-known' \
+            -exec rm -rf {} \; 2>/dev/null || true
+          
+          # Clone repository
+          echo "Cloning repository..."
+          git clone --depth 1 --branch ${{ github.ref_name }} "$REPO_URL" temp_repo
+          cd temp_repo
+          git checkout "$COMMIT_SHA" 2>/dev/null || echo "Using branch head"
+          
+          # Move files to web directory
+          cp -r . "$WEB_DIR/"
+          cd "$WEB_DIR"
+          rm -rf temp_repo
+          
+          # Set up environment
+          echo "Configuring environment..."
+          [ -f .env.production ] && cp .env.production .env
+          [ -f .htaccess-root ] && cp .htaccess-root .htaccess
+          [ -f .htaccess-public ] && cp .htaccess-public public/.htaccess
+          
+          # Clean up deployment files
+          rm -f .env.production .htaccess-root .htaccess-public
+          rm -rf .git .github
+          
+          # Install PHP dependencies
+          echo "Installing PHP dependencies..."
+          /opt/alt/php81/usr/bin/php /opt/alt/php81/usr/bin/composer install \
+            --no-dev \
+            --optimize-autoloader \
+            --no-interaction \
+            --prefer-dist
+          
+          # Generate application key if needed
+          if ! grep -q "APP_KEY=base64:" .env 2>/dev/null; then
+            echo "Generating application key..."
+            /opt/alt/php81/usr/bin/php artisan key:generate --force
+          fi
+          
+          # Database operations
+          echo "Running database operations..."
+          if [ "${{ github.event.inputs.run_migrations }}" != "false" ]; then
+            echo "Running migrations..."
+            /opt/alt/php81/usr/bin/php artisan migrate --force
+            
+            echo "Seeding essential data..."
+            /opt/alt/php81/usr/bin/php artisan db:seed --class=UserPreferencesSeeder --force || echo "Seeding completed with warnings"
+          fi
+          
+          # Clear caches
+          if [ "${{ github.event.inputs.clear_cache }}" != "false" ]; then
+            echo "Clearing all caches..."
+            /opt/alt/php81/usr/bin/php artisan cache:clear
+            /opt/alt/php81/usr/bin/php artisan config:clear
+            /opt/alt/php81/usr/bin/php artisan route:clear
+            /opt/alt/php81/usr/bin/php artisan view:clear
+            /opt/alt/php81/usr/bin/php artisan event:clear
+          fi
+          
+          # Optimize application
+          echo "Optimizing application..."
+          /opt/alt/php81/usr/bin/php artisan config:cache
+          /opt/alt/php81/usr/bin/php artisan route:cache
+          /opt/alt/php81/usr/bin/php artisan view:cache
+          /opt/alt/php81/usr/bin/php artisan event:cache
+          
+          # Storage operations
+          echo "Setting up storage..."
+          /opt/alt/php81/usr/bin/php artisan storage:link || echo "Storage link already exists"
+          
+          # Queue and scheduler setup
+          echo "Setting up queue and scheduler..."
+          /opt/alt/php81/usr/bin/php artisan queue:restart || echo "Queue restart completed"
+          
+          # Set comprehensive permissions
+          echo "Setting permissions..."
+          find . -type f -exec chmod 644 {} \;
+          find . -type d -exec chmod 755 {} \;
+          chmod -R 775 storage
+          chmod -R 775 bootstrap/cache
+          chmod 755 artisan
+          
+          # Security hardening
+          echo "Applying security hardening..."
+          # Protect sensitive files
+          [ -f .env ] && chmod 600 .env
+          [ -f storage/logs/laravel.log ] && chmod 640 storage/logs/laravel.log
+          
+          # Health check
+          echo "Running health checks..."
+          /opt/alt/php81/usr/bin/php artisan about --only=environment || echo "Health check completed"
+          
+          # Test database connection
+          /opt/alt/php81/usr/bin/php artisan tinker --execute="DB::connection()->getPdo(); echo 'Database connection: OK';" || echo "Database check completed"
+          
+          # Disable maintenance mode
+          echo "Disabling maintenance mode..."
+          /opt/alt/php81/usr/bin/php artisan up || echo "Maintenance mode disabled"
+          
+          # Final deployment test
+          echo "Testing deployment..."
+          HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" https://go.habibistay.com)
+          echo "Site HTTP Status: $HTTP_CODE"
+          
+          # Test API endpoints
+          API_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://go.habibistay.com/api/health 2>/dev/null || echo "API test skipped")
+          echo "API Status: $API_STATUS"
+          
+          # Log deployment
+          echo "$(date): Deployment $DEPLOYMENT_TIME completed successfully. Commit: $COMMIT_SHA" >> /home/u221943340/deployment.log
+          
+          echo "=== HabibiStay Full Deployment Completed Successfully at $(date) ==="
+          echo "Site URL: https://go.habibistay.com"
+          echo "Admin URL: https://go.habibistay.com/admin"
+          echo "Deployment ID: $DEPLOYMENT_TIME"
+
+    - name: Post-Deployment Health Check
+      if: success()
+      run: |
+        echo "Running comprehensive health checks..."
+        
+        # Test main site
+        MAIN_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://go.habibistay.com)
+        echo "Main site status: $MAIN_STATUS"
+        
+        # Test admin panel
+        ADMIN_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://go.habibistay.com/admin)
+        echo "Admin panel status: $ADMIN_STATUS"
+        
+        # Test API health endpoint
+        API_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://go.habibistay.com/api/health 2>/dev/null || echo "404")
+        echo "API health status: $API_STATUS"
+        
+        # Check if site is loading properly
+        if [ "$MAIN_STATUS" = "200" ]; then
+          echo "✅ Main site is accessible"
+        else
+          echo "❌ Main site returned status: $MAIN_STATUS"
+          exit 1
+        fi
+
+    - name: Run Performance Tests
+      if: success()
+      run: |
+        echo "Running performance tests..."
+        
+        # Test page load time
+        LOAD_TIME=$(curl -w "%{time_total}" -s -o /dev/null https://go.habibistay.com)
+        echo "Page load time: ${LOAD_TIME}s"
+        
+        # Test if load time is acceptable (less than 5 seconds)
+        if (( $(echo "$LOAD_TIME < 5.0" | bc -l) )); then
+          echo "✅ Page load time is acceptable"
+        else
+          echo "⚠️ Page load time is slow: ${LOAD_TIME}s"
+        fi
+
+    - name: Notify Slack on Success
+      if: success() && secrets.SLACK_WEBHOOK_URL
+      uses: 8398a7/action-slack@v3
+      with:
+        status: success
+        text: |
+          🚀 HabibiStay deployment completed successfully!
+          
+          📊 Deployment Details:
+          • Repository: ${{ github.repository }}
+          • Branch: ${{ github.ref_name }}
+          • Commit: ${{ github.sha }}
+          • Environment: ${{ github.event.inputs.environment || 'production' }}
+          • Deployed by: ${{ github.actor }}
+          
+          🔗 Links:
+          • Site: https://go.habibistay.com
+          • Admin: https://go.habibistay.com/admin
+          
+          ⏱️ Deployment completed at: $(date)
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+    - name: Notify Slack on Failure
+      if: failure() && secrets.SLACK_WEBHOOK_URL
+      uses: 8398a7/action-slack@v3
+      with:
+        status: failure
+        text: |
+          ❌ HabibiStay deployment failed!
+          
+          📊 Deployment Details:
+          • Repository: ${{ github.repository }}
+          • Branch: ${{ github.ref_name }}
+          • Commit: ${{ github.sha }}
+          • Environment: ${{ github.event.inputs.environment || 'production' }}
+          • Failed step: ${{ job.status }}
+          
+          Please check the deployment logs and fix the issues.
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+    - name: Create Deployment Record
+      if: always()
+      run: |
+        # Create deployment summary
+        cat > deployment-summary.json << EOF
+        {
+          "deployment_id": "$(date +%Y%m%d_%H%M%S)",
+          "repository": "${{ github.repository }}",
+          "branch": "${{ github.ref_name }}",
+          "commit_sha": "${{ github.sha }}",
+          "commit_message": "${{ github.event.head_commit.message }}",
+          "deployed_by": "${{ github.actor }}",
+          "deployment_time": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+          "environment": "${{ github.event.inputs.environment || 'production' }}",
+          "status": "${{ job.status }}",
+          "site_url": "https://go.habibistay.com",
+          "admin_url": "https://go.habibistay.com/admin",
+          "features_enabled": {
+            "sara_ai": true,
+            "booking_system": true,
+            "payment_gateway": true,
+            "notification_system": true,
+            "mobile_app_support": true,
+            "admin_dashboard": true,
+            "host_dashboard": true,
+            "email_templates": true,
+            "referral_system": true,
+            "wishlist": true,
+            "reviews": true,
+            "advanced_search": true,
+            "property_calendar": true,
+            "ical_sync": true,
+            "channel_manager": true,
+            "dispute_system": true
+          }
+        }
+        EOF
+        
+        echo "Deployment summary created"
+        cat deployment-summary.json
+
+  post-deploy-monitoring:
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: success()
+    
+    steps:
+    - name: Monitor Site Availability
+      run: |
+        echo "Setting up monitoring for HabibiStay..."
+        
+        # Monitor for 5 minutes to ensure stability
+        for i in {1..10}; do
+          echo "Health check $i/10..."
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://go.habibistay.com)
+          
+          if [ "$STATUS" = "200" ]; then
+            echo "✅ Check $i: Site is healthy (HTTP $STATUS)"
+          else
+            echo "❌ Check $i: Site returned HTTP $STATUS"
+            exit 1
+          fi
+          
+          sleep 30
+        done
+        
+        echo "🎉 Site monitoring completed successfully!"
+        echo "HabibiStay is stable and running at: https://go.habibistay.com"

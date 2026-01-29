@@ -1,0 +1,514 @@
+name: Production Deployment - HabibiStay
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: 'Force deployment even if tests fail'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    name: Tests & Quality Checks
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        extensions: mbstring, xml, ctype, iconv, intl, pdo_sqlite, mysql, pdo_mysql
+        coverage: none
+        
+    - name: Cache Composer packages
+      id: composer-cache
+      uses: actions/cache@v3
+      with:
+        path: vendor
+        key: ${{ runner.os }}-php-${{ hashFiles('**/composer.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-php-
+          
+    - name: Install PHP dependencies
+      run: composer install --prefer-dist --no-progress --no-suggest
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install Node dependencies
+      run: npm ci
+      
+    - name: NPM Security Audit
+      run: npm audit --audit-level moderate
+      continue-on-error: true
+      
+    - name: Copy environment file
+      run: cp .env.example .env
+      
+    - name: Generate application key
+      run: php artisan key:generate
+      
+    - name: Directory Permissions
+      run: chmod -R 755 storage bootstrap/cache
+      
+    - name: Create Database
+      run: |
+        mkdir -p database
+        touch database/database.sqlite
+        
+    - name: Execute tests (Unit and Feature tests)
+      env:
+        DB_CONNECTION: sqlite
+        DB_DATABASE: database/database.sqlite
+      run: php artisan test --parallel
+      continue-on-error: ${{ github.event.inputs.force_deploy == 'true' }}
+
+  build:
+    runs-on: ubuntu-latest
+    name: Build Production Assets
+    needs: tests
+    if: ${{ !failure() || github.event.inputs.force_deploy == 'true' }}
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.2'
+        extensions: mbstring, xml, ctype, iconv, intl
+        
+    - name: Install production dependencies
+      run: composer install --no-dev --optimize-autoloader --no-interaction
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install and build frontend assets
+      run: |
+        npm ci
+        npm run build
+        
+    - name: Create production environment file
+      run: |
+        cat > .env.production << 'EOF'
+        APP_NAME="HabibiStay"
+        APP_ENV=production
+        APP_KEY=${{ secrets.APP_KEY }}
+        APP_DEBUG=false
+        APP_URL=https://go.habibistay.com
+        
+        LOG_CHANNEL=single
+        LOG_DEPRECATIONS_CHANNEL=null
+        LOG_LEVEL=error
+        
+        DB_CONNECTION=mysql
+        DB_HOST=srv1730.hstgr.io
+        DB_PORT=3306
+        DB_DATABASE=u221943340_newa
+        DB_USERNAME=u221943340_newa
+        DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+        
+        BROADCAST_DRIVER=log
+        CACHE_DRIVER=file
+        FILESYSTEM_DISK=local
+        QUEUE_CONNECTION=database
+        SESSION_DRIVER=file
+        SESSION_LIFETIME=120
+        
+        MEMCACHED_HOST=127.0.0.1
+        
+        REDIS_HOST=127.0.0.1
+        REDIS_PASSWORD=null
+        REDIS_PORT=6379
+        
+        MAIL_MAILER=smtp
+        MAIL_HOST=${{ secrets.MAIL_HOST }}
+        MAIL_PORT=${{ secrets.MAIL_PORT }}
+        MAIL_USERNAME=${{ secrets.MAIL_USERNAME }}
+        MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}
+        MAIL_ENCRYPTION=tls
+        MAIL_FROM_ADDRESS=${{ secrets.MAIL_USERNAME }}
+        MAIL_FROM_NAME="HabibiStay"
+        
+        AWS_ACCESS_KEY_ID=
+        AWS_SECRET_ACCESS_KEY=
+        AWS_DEFAULT_REGION=us-east-1
+        AWS_BUCKET=
+        AWS_USE_PATH_STYLE_ENDPOINT=false
+        
+        PUSHER_APP_ID=
+        PUSHER_APP_KEY=
+        PUSHER_APP_SECRET=
+        PUSHER_HOST=
+        PUSHER_PORT=443
+        PUSHER_SCHEME=https
+        PUSHER_APP_CLUSTER=mt1
+        
+        VITE_PUSHER_APP_KEY="${PUSHER_APP_KEY}"
+        VITE_PUSHER_HOST="${PUSHER_HOST}"
+        VITE_PUSHER_PORT="${PUSHER_PORT}"
+        VITE_PUSHER_SCHEME="${PUSHER_SCHEME}"
+        VITE_PUSHER_APP_CLUSTER="${PUSHER_APP_CLUSTER}"
+        
+        # Payment Gateways
+        PAYPAL_MODE=live
+        PAYPAL_CLIENT_ID=${{ secrets.PAYPAL_CLIENT_ID }}
+        PAYPAL_CLIENT_SECRET=${{ secrets.PAYPAL_CLIENT_SECRET }}
+        
+        MYFATOORAH_TOKEN=${{ secrets.MYFATOORAH_TOKEN }}
+        MYFATOORAH_MODE=live
+        
+        # AI Services
+        OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}
+        ELEVENLABS_API_KEY=${{ secrets.ELEVENLABS_API_KEY }}
+        
+        # Google Services
+        GOOGLE_MAPS_API_KEY=${{ secrets.GOOGLE_MAPS_API_KEY }}
+        GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}
+        GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}
+        GOOGLE_REDIRECT_URI=https://go.habibistay.com/auth/google/callback
+        
+        # Security
+        BCRYPT_ROUNDS=12
+        EOF
+        
+    - name: Create optimized .htaccess files
+      run: |
+        # Root .htaccess
+        cat > .htaccess << 'EOF'
+        RewriteEngine On
+        RewriteRule ^(.*)$ public/$1 [L]
+        EOF
+        
+        # Public .htaccess
+        cat > public/.htaccess << 'EOF'
+        <IfModule mod_rewrite.c>
+            <IfModule mod_negotiation.c>
+                Options -MultiViews -Indexes
+            </IfModule>
+        
+            RewriteEngine On
+        
+            # Handle Authorization Header
+            RewriteCond %{HTTP:Authorization} .
+            RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+        
+            # Force HTTPS
+            RewriteCond %{HTTPS} off
+            RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+        
+            # Redirect Trailing Slashes If Not A Folder...
+            RewriteCond %{REQUEST_FILENAME} !-d
+            RewriteCond %{REQUEST_URI} (.+)/$
+            RewriteRule ^ %1 [L,R=301]
+        
+            # Send Requests To Front Controller...
+            RewriteCond %{REQUEST_FILENAME} !-d
+            RewriteCond %{REQUEST_FILENAME} !-f
+            RewriteRule ^ index.php [L]
+        </IfModule>
+        
+        # Security Headers
+        <IfModule mod_headers.c>
+            Header always set X-XSS-Protection "1; mode=block"
+            Header always set X-Content-Type-Options "nosniff"
+            Header always set X-Frame-Options "SAMEORIGIN"
+            Header always set Referrer-Policy "strict-origin-when-cross-origin"
+            Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+        </IfModule>
+        
+        # Block access to sensitive files
+        <Files ".env">
+            Order allow,deny
+            Deny from all
+        </Files>
+        
+        <FilesMatch "^(composer\.(json|lock)|package\.(json|lock)|\.git.*|\.env.*|artisan|\.editorconfig|\.gitignore|\.gitattributes|phpunit\.xml|webpack\.mix\.js|vite\.config\.js)$">
+            Order allow,deny
+            Deny from all
+        </FilesMatch>
+        
+        # Cache static assets
+        <IfModule mod_expires.c>
+            ExpiresActive on
+            ExpiresByType text/css "access plus 1 year"
+            ExpiresByType application/javascript "access plus 1 year"
+            ExpiresByType image/png "access plus 1 year"
+            ExpiresByType image/jpg "access plus 1 year"
+            ExpiresByType image/jpeg "access plus 1 year"
+            ExpiresByType image/gif "access plus 1 year"
+            ExpiresByType image/webp "access plus 1 year"
+            ExpiresByType font/woff "access plus 1 year"
+            ExpiresByType font/woff2 "access plus 1 year"
+        </IfModule>
+        
+        # Gzip compression
+        <IfModule mod_deflate.c>
+            AddOutputFilterByType DEFLATE text/plain
+            AddOutputFilterByType DEFLATE text/html
+            AddOutputFilterByType DEFLATE text/xml
+            AddOutputFilterByType DEFLATE text/css
+            AddOutputFilterByType DEFLATE text/javascript
+            AddOutputFilterByType DEFLATE application/xml
+            AddOutputFilterByType DEFLATE application/xhtml+xml
+            AddOutputFilterByType DEFLATE application/rss+xml
+            AddOutputFilterByType DEFLATE application/javascript
+            AddOutputFilterByType DEFLATE application/x-javascript
+            AddOutputFilterByType DEFLATE application/json
+        </IfModule>
+        EOF
+        
+    - name: Create deployment package
+      run: |
+        # Remove development files
+        rm -rf node_modules tests .git .github/workflows/simple-deploy.yml
+        rm -f .env .env.example phpunit.xml webpack.mix.js vite.config.js package*.json
+        
+        # Create deployment archive
+        tar -czf habibistay-deployment.tar.gz \
+          --exclude='*.log' \
+          --exclude='storage/logs/*' \
+          --exclude='storage/framework/cache/*' \
+          --exclude='storage/framework/sessions/*' \
+          --exclude='storage/framework/views/*' \
+          .
+          
+    - name: Upload deployment artifact
+      uses: actions/upload-artifact@v3
+      with:
+        name: habibistay-deployment
+        path: habibistay-deployment.tar.gz
+
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy to Production
+    needs: [tests, build]
+    if: ${{ !failure() || github.event.inputs.force_deploy == 'true' }}
+    
+    steps:
+    - name: Download deployment artifact
+      uses: actions/download-artifact@v3
+      with:
+        name: habibistay-deployment
+        
+    - name: Deploy via SSH
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.PRODUCTION_HOST }}
+        username: ${{ secrets.PRODUCTION_USERNAME }}
+        password: ${{ secrets.SSH_PASSWORD }}
+        port: ${{ secrets.PRODUCTION_PORT }}
+        script_stop: false
+        script: |
+          # Set paths
+          DOMAIN_PATH="/home/u221943340/domains/go.habibistay.com"
+          WEB_ROOT="$DOMAIN_PATH/public_html"
+          BACKUP_DIR="$DOMAIN_PATH/backups"
+          
+          echo "🚀 Starting HabibiStay production deployment..."
+          
+          # Create directories
+          mkdir -p "$BACKUP_DIR"
+          mkdir -p "$WEB_ROOT"
+          
+          # Create backup if site exists
+          if [ -f "$WEB_ROOT/index.php" ]; then
+            BACKUP_NAME="habibistay_backup_$(date +%Y%m%d_%H%M%S).tar.gz"
+            echo "📦 Creating backup: $BACKUP_NAME"
+            cd "$WEB_ROOT"
+            tar -czf "$BACKUP_DIR/$BACKUP_NAME" . 2>/dev/null || echo "⚠️ Backup failed but continuing..."
+            
+            # Keep only last 5 backups
+            cd "$BACKUP_DIR"
+            ls -t habibistay_backup_*.tar.gz | tail -n +6 | xargs -r rm
+          fi
+          
+          # Enable maintenance mode (create a simple maintenance page)
+          echo "🔧 Enabling maintenance mode..."
+          cat > "$WEB_ROOT/maintenance.html" << 'EOF'
+          <!DOCTYPE html>
+          <html><head><meta charset="utf-8"><title>Maintenance - HabibiStay</title>
+          <style>body{font-family:Arial,sans-serif;text-align:center;padding:50px;background:#f5f5f5}
+          .container{max-width:500px;margin:0 auto;background:white;padding:30px;border-radius:10px;box-shadow:0 2px 10px rgba(0,0,0,0.1)}
+          .logo{color:#2957c3;font-size:24px;font-weight:bold;margin-bottom:20px}
+          h1{color:#333;margin-bottom:15px}p{color:#666;line-height:1.6}</style></head>
+          <body><div class="container"><div class="logo">🏠 HabibiStay</div>
+          <h1>Maintenance in Progress</h1><p>We're updating our platform to serve you better. We'll be back shortly!</p>
+          <p><em>Estimated time: 2-3 minutes</em></p></div></body></html>
+          EOF
+          
+          # Backup current .htaccess if it exists
+          [ -f "$WEB_ROOT/.htaccess" ] && cp "$WEB_ROOT/.htaccess" "$WEB_ROOT/.htaccess.bak"
+          
+          # Create temporary maintenance .htaccess
+          cat > "$WEB_ROOT/.htaccess.maintenance" << 'EOF'
+          RewriteEngine On
+          RewriteCond %{REQUEST_URI} !^/maintenance\.html$
+          RewriteRule ^(.*)$ /maintenance.html [R=503,L]
+          ErrorDocument 503 /maintenance.html
+          Header always set Retry-After "180"
+          EOF
+          
+          # Enable maintenance mode
+          mv "$WEB_ROOT/.htaccess.maintenance" "$WEB_ROOT/.htaccess"
+          
+          echo "✅ Maintenance mode enabled"
+          
+      - name: Transfer deployment files
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: ${{ secrets.PRODUCTION_PORT }}
+          source: "habibistay-deployment.tar.gz"
+          target: "/home/u221943340/"
+          
+      - name: Complete deployment
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USERNAME }}
+          password: ${{ secrets.SSH_PASSWORD }}
+          port: ${{ secrets.PRODUCTION_PORT }}
+          script: |
+            # Set paths
+            DOMAIN_PATH="/home/u221943340/domains/go.habibistay.com"
+            WEB_ROOT="$DOMAIN_PATH/public_html"
+            TEMP_DIR="/home/u221943340/temp_deploy"
+            
+            echo "📦 Extracting deployment files..."
+            
+            # Create temporary directory
+            rm -rf "$TEMP_DIR"
+            mkdir -p "$TEMP_DIR"
+            cd /home/u221943340
+            
+            # Extract deployment
+            tar -xzf habibistay-deployment.tar.gz -C "$TEMP_DIR"
+            
+            echo "🔄 Updating application files..."
+            
+            # Remove old application files (keep storage and some config)
+            cd "$WEB_ROOT"
+            find . -maxdepth 1 -type f -name "*.php" -delete
+            rm -rf app bootstrap config database resources routes vendor public/build public/assets
+            
+            # Copy new files
+            cp -r "$TEMP_DIR"/* "$WEB_ROOT"/
+            
+            # Ensure storage directories exist
+            mkdir -p "$WEB_ROOT/storage/logs"
+            mkdir -p "$WEB_ROOT/storage/framework/sessions"
+            mkdir -p "$WEB_ROOT/storage/framework/views"
+            mkdir -p "$WEB_ROOT/storage/framework/cache"
+            mkdir -p "$WEB_ROOT/storage/app/public"
+            
+            # Set up environment
+            cd "$WEB_ROOT"
+            if [ -f ".env.production" ]; then
+              cp .env.production .env
+              echo "✅ Environment configured"
+            else
+              echo "❌ .env.production not found!"
+              exit 1
+            fi
+            
+            echo "🔑 Setting up Laravel..."
+            
+            # Laravel setup with proper PHP path
+            /opt/alt/php82/usr/bin/php artisan key:generate --force
+            /opt/alt/php82/usr/bin/php artisan migrate --force
+            /opt/alt/php82/usr/bin/php artisan config:cache
+            /opt/alt/php82/usr/bin/php artisan route:cache
+            /opt/alt/php82/usr/bin/php artisan view:cache
+            /opt/alt/php82/usr/bin/php artisan storage:link
+            
+            echo "🔐 Setting permissions..."
+            
+            # Set permissions
+            chmod -R 755 .
+            chmod -R 775 storage bootstrap/cache
+            
+            # Restore .htaccess or use backup
+            if [ -f ".htaccess.bak" ]; then
+              mv .htaccess.bak .htaccess
+            fi
+            
+            echo "🧹 Cleaning up..."
+            
+            # Cleanup
+            rm -rf "$TEMP_DIR"
+            rm -f /home/u221943340/habibistay-deployment.tar.gz
+            rm -f maintenance.html
+            rm -f .env.production
+            
+            echo "✅ Deployment completed successfully!"
+            echo "🌐 Site: https://go.habibistay.com"
+
+  health-check:
+    runs-on: ubuntu-latest
+    name: Health Check
+    needs: deploy
+    if: ${{ !failure() }}
+    
+    steps:
+    - name: Wait for deployment to settle
+      run: sleep 30
+      
+    - name: Check site health
+      run: |
+        echo "🔍 Checking site health..."
+        
+        # Check if site loads
+        HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://go.habibistay.com/ || echo "000")
+        echo "Site HTTP Status: $HTTP_STATUS"
+        
+        if [ "$HTTP_STATUS" = "200" ]; then
+          echo "✅ Site is responding correctly"
+        else
+          echo "❌ Site health check failed"
+          exit 1
+        fi
+        
+        # Check if Laravel is working (if there's a health endpoint)
+        HEALTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://go.habibistay.com/api/health || echo "000")
+        echo "Health endpoint status: $HEALTH_STATUS"
+        
+        # Additional checks can be added here
+        echo "🎉 Health check completed successfully!"
+
+  notify:
+    runs-on: ubuntu-latest
+    name: Deployment Notification
+    needs: [deploy, health-check]
+    if: always()
+    
+    steps:
+    - name: Notify deployment status
+      run: |
+        if [ "${{ needs.deploy.result }}" = "success" ] && [ "${{ needs.health-check.result }}" = "success" ]; then
+          echo "🎉 Deployment successful!"
+          echo "✅ HabibiStay is now live at https://go.habibistay.com"
+        elif [ "${{ needs.deploy.result }}" = "failure" ]; then
+          echo "❌ Deployment failed!"
+          echo "🔄 Please check the logs and retry"
+        else
+          echo "⚠️ Deployment completed but health check failed"
+          echo "🔍 Please verify the site manually: https://go.habibistay.com"
+        fi

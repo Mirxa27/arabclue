@@ -1,0 +1,29 @@
+{
+  "meta": {
+    "generatedAt": "2025-06-08T07:42:52.719Z",
+    "tasksAnalyzed": 1,
+    "totalTasks": 10,
+    "analysisCount": 2,
+    "thresholdScore": 5,
+    "projectName": "Taskmaster",
+    "usedResearch": true
+  },
+  "complexityAnalysis": [
+    {
+      "taskId": 1,
+      "taskTitle": "Setup Project Repository",
+      "complexityScore": 3,
+      "recommendedSubtasks": 3,
+      "expansionPrompt": "Break down the task into initializing the Git repository, creating the README file, and configuring the branch settings.",
+      "reasoning": "The task involves basic setup steps that are straightforward but require attention to detail, thus a moderate complexity score. Expanding into subtasks will help ensure each step is completed correctly."
+    },
+    {
+      "taskId": 2,
+      "taskTitle": "Define Database Schema for Featured Properties",
+      "complexityScore": 4,
+      "recommendedSubtasks": 3,
+      "expansionPrompt": "1. Analyze the current Property model and identify the necessary changes. 2. Implement the migration script to add the 'isFeatured' field. 3. Update the admin interface to allow toggling the 'isFeatured' flag.",
+      "reasoning": "The task involves modifying an existing database schema, which requires understanding the current model and ensuring compatibility with the admin interface. While it is not overly complex, it does require careful implementation and testing."
+    }
+  ]
+}

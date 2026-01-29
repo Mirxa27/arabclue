@@ -1,0 +1,129 @@
+{
+  "name": "HabibiStay - Premium Property Rentals",
+  "short_name": "HabibiStay",
+  "description": "Exceptional Stays. Exceptional Returns. Book memorable getaways in Riyadh.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "theme_color": "#2957c3",
+  "background_color": "#ffffff",
+  "scope": "/",
+  "lang": "en-US",
+  "dir": "ltr",
+  "categories": ["travel", "lifestyle", "business"],
+  "prefer_related_applications": false,
+  "icons": [
+    {
+      "src": "/assets/icons/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/icons/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/icons/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/icons/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/icons/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/icons/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/assets/screenshots/home-mobile.png",
+      "sizes": "412x915",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "HabibiStay Home"
+    },
+    {
+      "src": "/assets/screenshots/property-mobile.png",
+      "sizes": "412x915",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Property View"
+    },
+    {
+      "src": "/assets/screenshots/chat-mobile.png",
+      "sizes": "412x915",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Sara AI Assistant"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Book a Stay",
+      "short_name": "Book",
+      "description": "Find your perfect accommodation",
+      "url": "/stays",
+      "icons": [{ "src": "/assets/icons/book-icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "List Property",
+      "short_name": "List",
+      "description": "Become a host",
+      "url": "/host/properties/create",
+      "icons": [{ "src": "/assets/icons/host-icon-96x96.png", "sizes": "96x96" }]
+    },
+    {
+      "name": "Chat with Sara",
+      "short_name": "Sara",
+      "description": "AI booking assistant",
+      "url": "/chat",
+      "icons": [{ "src": "/assets/icons/sara-icon-96x96.png", "sizes": "96x96" }]
+    }
+  ],
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url",
+      "files": [
+        {
+          "name": "images",
+          "accept": ["image/*"]
+        }
+      ]
+    }
+  },
+  "related_applications": [],
+  "iarc_rating_id": "e84b072d-9b2e-4c9d-9f6e-6b8e9e9e9e9e"
+}

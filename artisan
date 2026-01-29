@@ -1,0 +1,73 @@
+#!/usr/bin/env php
+<?php
+
+/**
+ * Laravel Artisan Console Kernel Bootstrap
+ * 
+ * This script initializes the Laravel console application, leveraging
+ * the Symfony Console component for CLI operations. It implements
+ * the Command pattern for extensible CLI functionality.
+ *
+ * @package HabibiStay
+ * @version 1.0.0
+ */
+
+define('LARAVEL_START', microtime(true));
+
+/*
+|--------------------------------------------------------------------------
+| Register The Auto Loader
+|--------------------------------------------------------------------------
+|
+| Composer provides a convenient, automatically generated class loader
+| for our application. We utilize it to lazily load class files as
+| they are required, implementing PSR-4 autoloading standards.
+|
+*/
+
+require __DIR__.'/vendor/autoload.php';
+
+/*
+|--------------------------------------------------------------------------
+| Bootstrap The Application Container
+|--------------------------------------------------------------------------
+|
+| Initialize the Laravel IoC container and bind core service providers.
+| This implements the Service Locator pattern for dependency resolution
+| and Inversion of Control for loosely coupled architecture.
+|
+*/
+
+$app = require_once __DIR__.'/bootstrap/app.php';
+
+/*
+|--------------------------------------------------------------------------
+| Execute The Console Application
+|--------------------------------------------------------------------------
+|
+| Resolve the console kernel from the IoC container and execute
+| the incoming console command. The kernel handles command routing,
+| middleware execution, and response formatting.
+|
+*/
+
+$kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
+
+$status = $kernel->handle(
+    $input = new Symfony\Component\Console\Input\ArgvInput,
+    new Symfony\Component\Console\Output\ConsoleOutput
+);
+
+/*
+|--------------------------------------------------------------------------
+| Shutdown The Application
+|--------------------------------------------------------------------------
+|
+| Execute any termination logic and cleanup operations. This ensures
+| proper resource deallocation and graceful application shutdown.
+|
+*/
+
+$kernel->terminate($input, $status);
+
+exit($status);

@@ -1,0 +1,111 @@
+# Laravel
+/node_modules
+/public/hot
+/public/storage
+/storage/*.key
+/vendor
+.env
+.env.backup
+.env.production
+.phpunit.result.cache
+docker-compose.override.yml
+Homestead.json
+Homestead.yaml
+npm-debug.log
+yarn-error.log
+/.idea
+/.vscode
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+*.log
+storage/logs/*
+!storage/logs/.gitkeep
+
+# Cache
+bootstrap/cache/*
+!bootstrap/cache/.gitkeep
+storage/framework/cache/*
+!storage/framework/cache/.gitkeep
+storage/framework/sessions/*
+!storage/framework/sessions/.gitkeep
+storage/framework/testing/*
+!storage/framework/testing/.gitkeep
+storage/framework/views/*
+!storage/framework/views/.gitkeep
+
+# Deployment files
+*.tar.gz
+*.zip
+deploy*.sh
+*.exp
+debug-*.php
+test-*.php
+create-*.php
+verify-*.php
+run-*.php
+check-*.php
+*.sql
+habibistay-*.tar.gz
+habibistay-*.zip
+
+# Documentation (keep only main README)
+AGENT.md
+DATABASE_TABLES_SUMMARY.md
+DEPLOYMENT_*.md
+FEATURE_*.md
+FINAL_*.md
+FRONTEND_*.md
+HOSTINGER_*.md
+IMPLEMENTATION_*.md
+INSTALLATION_*.md
+MANUAL_*.md
+PROJECT_*.md
+QUICK_*.md
+README-NEW-FEATURES.md
+SARA_*.md
+TESTING_*.md
+
+# Temporary files
+*.tmp
+*.temp
+.htaccess-*
+env-*
+
+# IDE and editor files
+.cursor/
+.vscode/
+*.backup*
+.env.backup*
+
+# Environment variables
+.env
+
+# Editor directories and files
+.idea
+.vscode
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# OS specific
+.DS_Store
+
+# Task files
+tasks.json
+tasks/ 
+# Ignore environment files
+.env
+.env.*
+!.env.example
+database/database.sqlite

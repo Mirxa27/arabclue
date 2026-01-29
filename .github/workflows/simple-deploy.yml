@@ -1,0 +1,95 @@
+name: Simple Deploy to Hostinger
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup PHP
+      uses: shivammathur/setup-php@v2
+      with:
+        php-version: '8.1'
+        
+    - name: Install dependencies
+      run: composer install --no-dev --optimize-autoloader
+      
+    - name: Prepare deployment files
+      run: |
+        # Create production environment
+        echo "APP_NAME=HabibiStay" > .env.production
+        echo "APP_ENV=production" >> .env.production
+        echo "APP_KEY=${{ secrets.APP_KEY }}" >> .env.production
+        echo "APP_DEBUG=false" >> .env.production
+        echo "APP_URL=https://go.habibistay.com" >> .env.production
+        echo "DB_CONNECTION=mysql" >> .env.production
+        echo "DB_HOST=srv1730.hstgr.io" >> .env.production
+        echo "DB_PORT=3306" >> .env.production
+        echo "DB_DATABASE=u221943340_newa" >> .env.production
+        echo "DB_USERNAME=u221943340_newa" >> .env.production
+        echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env.production
+        echo "CACHE_DRIVER=file" >> .env.production
+        echo "SESSION_DRIVER=file" >> .env.production
+        echo "QUEUE_CONNECTION=sync" >> .env.production
+        
+        # Create htaccess files
+        echo "RewriteEngine On" > htaccess-root
+        echo "RewriteRule ^(.*)$ public/\$1 [L]" >> htaccess-root
+        
+        echo "<IfModule mod_rewrite.c>" > htaccess-public
+        echo "    RewriteEngine On" >> htaccess-public
+        echo "    RewriteCond %{REQUEST_FILENAME} !-d" >> htaccess-public
+        echo "    RewriteCond %{REQUEST_FILENAME} !-f" >> htaccess-public
+        echo "    RewriteRule ^ index.php [L]" >> htaccess-public
+        echo "</IfModule>" >> htaccess-public
+        
+    - name: Deploy via SSH
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: 195.35.57.85
+        username: u221943340
+        password: ${{ secrets.SSH_PASSWORD }}
+        port: 65002
+        script: |
+          cd /home/u221943340/domains/go.habibistay.com/public_html
+          
+          # Backup if exists
+          [ -d vendor ] && tar -czf ../backup-$(date +%Y%m%d_%H%M%S).tar.gz . 2>/dev/null
+          
+          # Clean directory
+          rm -rf * .*htaccess 2>/dev/null
+          
+          # Clone from GitHub
+          git clone https://github.com/${{ github.repository }}.git .
+          git checkout ${{ github.sha }}
+          
+          # Set up files
+          [ -f .env.production ] && cp .env.production .env
+          [ -f htaccess-root ] && cp htaccess-root .htaccess
+          [ -f htaccess-public ] && cp htaccess-public public/.htaccess
+          
+          # Install dependencies
+          /opt/alt/php81/usr/bin/php /opt/alt/php81/usr/bin/composer install --no-dev --optimize-autoloader
+          
+          # Laravel setup
+          /opt/alt/php81/usr/bin/php artisan key:generate --force
+          /opt/alt/php81/usr/bin/php artisan migrate --force
+          /opt/alt/php81/usr/bin/php artisan config:cache
+          /opt/alt/php81/usr/bin/php artisan route:cache
+          /opt/alt/php81/usr/bin/php artisan storage:link
+          
+          # Set permissions
+          chmod -R 755 .
+          chmod -R 775 storage bootstrap/cache
+          
+          # Clean up
+          rm -f .env.production htaccess-* .git* README*.md *.sh *.exp
+          
+          echo "Deployment completed!"
