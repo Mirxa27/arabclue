@@ -204,13 +204,13 @@
                                         <img
                                             class="announcement-img announcement-img-dark peer hidden shrink-0 dark:block"
                                             src="{{ setting('announcement_image_dark', '/upload/images/speaker.png') }}"
-                                            alt="@lang(setting('announcement_title', 'Welcome to ArabClue!'))"
+                                            alt="@lang(setting('announcement_title', 'Welcome to MagicAI!'))"
                                         >
                                     @endif
                                     <img
                                         class="announcement-img announcement-img-light shrink-0 dark:peer-[&.announcement-img-dark]:hidden"
                                         src="{{ setting('announcement_image', '/upload/images/speaker.png') }}"
-                                        alt="@lang(setting('announcement_title', 'Welcome to ArabClue!'))"
+                                        alt="@lang(setting('announcement_title', 'Welcome to MagicAI!'))"
                                     >
                                 </div>
                             </div>

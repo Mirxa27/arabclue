@@ -127,7 +127,7 @@
             href="#"
         >
             <x-tabler-info-circle class="size-5" />
-            {{ __('Explore Entire ArabClue AI Suite ') }}
+            {{ __('Explore Entire MagicAI AI Suite ') }}
         </a>
     </div>
 </section>

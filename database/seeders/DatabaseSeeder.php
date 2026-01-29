@@ -12,6 +12,7 @@ class DatabaseSeeder extends Seeder
     {
         InstallationHelper::runInstallation();
         $this->call([
+            ExtensionsSeeder::class,
             IntroductionSeeder::class,
             RoleSeeder::class,
             PermissionSeeder::class,

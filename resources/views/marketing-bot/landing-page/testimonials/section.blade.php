@@ -89,7 +89,7 @@
         </header>
 
         <h5 class="mb-7 text-center">
-            {{ __('Join over 5,000 businesses that trust ArabClue') }}
+            {{ __('Join over 5,000 businesses that trust MagicAI') }}
         </h5>
 
         <div class="mx-auto lg:w-1/2">

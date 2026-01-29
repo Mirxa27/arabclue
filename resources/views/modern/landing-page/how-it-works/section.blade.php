@@ -11,7 +11,7 @@
             <p class="text-header-p mx-auto text-[25px] font-semibold leading-7 lg:w-3/4">
                 {!! $fSectSettings->how_it_works_title
                     ? __($fSectSettings->how_it_works_title)
-                    : __("ArabClue is incredibly user-friendly you'll be amazed at how simple it is to create your first AI content.") !!}
+                    : __("MagicAI is incredibly user-friendly you'll be amazed at how simple it is to create your first AI content.") !!}
             </p>
         </header>
 
