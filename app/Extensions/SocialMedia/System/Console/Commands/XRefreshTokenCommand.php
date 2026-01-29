@@ -6,7 +6,6 @@ use App\Extensions\SocialMedia\System\Models\SocialMediaPlatform;
 use App\Extensions\SocialMedia\System\Services\Token\XRefreshAccessToken;
 use Exception;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Log;
 
 class XRefreshTokenCommand extends Command
 {
@@ -16,8 +15,6 @@ class XRefreshTokenCommand extends Command
 
     public function handle(): void
     {
-        Log::info('XRefreshTokenCommand started');
-
         $tokens = SocialMediaPlatform::query()
             ->where('platform', 'x')
             ->where('expires_at', '<', now()->subMinutes(10)->format('Y-m-d h:i:s'))

@@ -1186,9 +1186,7 @@
                     const form = event.target;
                     const formData = new FormData(form);
 
-                    if (this.collectingEmail) return;
-
-                    this.collectingEmail = true;
+                    if (this.activeChatbot.showCollectEmail) return;
 
                     const response = await fetch(`{{ isset($routes) ? $routes['collect-email'] : '' }}`, {
                         method: "POST",
@@ -1198,7 +1196,9 @@
                         body: formData,
                     });
 
-                    this.collectingEmail = false;
+					this.activeChatbot.showCollectEmail = false;
+
+					console.log(this.activeChatbot);
 
                     const data = await response.json();
 
@@ -1214,7 +1214,7 @@
                         message: data.message ?? '{{ __('Email collected successfully.') }}'
                     });
 
-                    this.messages = this.messages.filter(message => message.role === 'collect-email');
+                    this.messages = this.messages.filter(message => message.role !== 'collect-email');
                 },
 
                 async toggleSound(event) {

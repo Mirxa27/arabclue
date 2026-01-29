@@ -87,16 +87,16 @@
 
                             imageResultTemplate.querySelector('.image-result').setAttribute(
                                 'data-id', image.id);
-                            imageResultTemplate.querySelector('.image-result').classList
-                                .remove('lqd-is-loading');
+                            imageResultTemplate.querySelector('.image-result').classList.remove('lqd-is-loading');
+                            imageResultTemplate.querySelector('.image-result').classList.add('lqd-image-result-in-queue');
                             imageResultTemplate.querySelector('.image-result').setAttribute(
-                                'data-generator', 'pi');
+                                'data-generator', image.response.substr(0, 2).toLowerCase());
                             imageResultTemplate.querySelector('.lqd-image-result-img')
                                 .setAttribute('src', image.output);
                             imageResultTemplate.querySelector('.lqd-image-result-img')
                                 .setAttribute('id', image.img_id);
                             imageResultTemplate.querySelector('.lqd-image-result-type')
-                                .innerHTML = 'PI';
+                                .innerHTML = image.response.substr(0, 2).toUpperCase();
                             imageResultTemplate.querySelector('.lqd-image-result-view')
                                 .setAttribute('data-payload', JSON.stringify(image));
 
@@ -164,7 +164,7 @@
                                 codePre.querySelectorAll('pre').forEach(pre => {
                                     pre.classList.add(
                                         `language-${codeLang && codeLang.value !== '' ? codeLang.value : 'javascript'}`
-                                        );
+                                    );
                                 })
 
                                 // saving for copy
@@ -223,6 +223,7 @@
                         let imgElementPayloadId = document.getElementById(item.payloadId);
                         let imgElementDownload = document.getElementById(item.imgId + '-download');
                         if (imgElement) {
+                            imgElement.closest('.image-result')?.classList?.remove('lqd-image-result-in-queue');
                             imgElement.src = item.img;
                             imgElementDownload.setAttribute('href', item.img)
                             imgElementDownload.setAttribute('target', '_blank')

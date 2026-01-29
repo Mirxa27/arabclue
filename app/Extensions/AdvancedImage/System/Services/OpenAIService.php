@@ -9,9 +9,11 @@ class OpenAIService
 {
     public string $tool;
 
+    public string $model = 'gpt-image-1';
+
     public Request $request;
 
-    public function generate()
+    public function generate(): array
     {
         return match ($this->tool) {
             'reimagine'         => $this->reimagineHandle(),
@@ -32,10 +34,11 @@ class OpenAIService
             'uploaded_image'   => 'required|image|mimes:jpeg,png,jpg,gif|max:4096',
         ]);
 
-        $image = 'uploads/' . $this->request->file('uploaded_image')->store('', ['disk' => 'uploads']);
+        $image = 'uploads/' . $this->request->file('uploaded_image')?->store('', ['disk' => 'uploads']);
 
         return app(CreateImageEditService::class)
             ->setImages([$image])
+            ->setModel($this->getModel())
             ->setPrompt('Remove all visible text from the selected area of the image and fill the region with natural background content, matching the surrounding textures and colors.')
             ->generate();
     }
@@ -48,11 +51,12 @@ class OpenAIService
             'reference_image'  => 'required|image|mimes:jpeg,png,jpg,gif|max:4096',
         ]);
 
-        $image = 'uploads/' . $this->request->file('uploaded_image')->store('', ['disk' => 'uploads']);
-        $style = 'uploads/' . $this->request->file('reference_image')->store('', ['disk' => 'uploads']);
+        $image = 'uploads/' . $this->request->file('uploaded_image')?->store('', ['disk' => 'uploads']);
+        $style = 'uploads/' . $this->request->file('reference_image')?->store('', ['disk' => 'uploads']);
 
         return app(CreateImageEditService::class)
             ->setImages([$image, $style])
+            ->setModel($this->getModel())
             ->setPrompt('Apply style transfer to the image.')
             ->generate();
     }
@@ -63,10 +67,11 @@ class OpenAIService
             'uploaded_image'   => 'required|image|mimes:jpeg,png,jpg,gif|max:4096',
         ]);
 
-        $image = 'uploads/' . $this->request->file('uploaded_image')->store('', ['disk' => 'uploads']);
+        $image = 'uploads/' . $this->request->file('uploaded_image')?->store('', ['disk' => 'uploads']);
 
         return app(CreateImageEditService::class)
             ->setImages([$image])
+            ->setModel($this->getModel())
             ->setPrompt('Inpainting : ' . $this->request->input('description'))
             ->generate();
     }
@@ -77,10 +82,11 @@ class OpenAIService
             'sketch_file'   => 'required|image|mimes:jpeg,png,jpg,gif|max:4096',
         ]);
 
-        $image = 'uploads/' . $this->request->file('sketch_file')->store('', ['disk' => 'uploads']);
+        $image = 'uploads/' . $this->request->file('sketch_file')?->store('', ['disk' => 'uploads']);
 
         return app(CreateImageEditService::class)
             ->setImages([$image])
+            ->setModel($this->getModel())
             ->setPrompt('sketch to image : ' . $this->request->input('description'))
             ->generate();
     }
@@ -91,10 +97,11 @@ class OpenAIService
             'uploaded_image'   => 'required|image|mimes:jpeg,png,jpg,gif|max:4096',
         ]);
 
-        $image = 'uploads/' . $this->request->file('uploaded_image')->store('', ['disk' => 'uploads']);
+        $image = 'uploads/' . $this->request->file('uploaded_image')?->store('', ['disk' => 'uploads']);
 
         return app(CreateImageEditService::class)
             ->setImages([$image])
+            ->setModel($this->getModel())
             ->setPrompt('Remove the background of the image and make it transparent.')
             ->generate();
     }
@@ -106,13 +113,14 @@ class OpenAIService
             'mask_file'        => 'required|image|mimes:jpeg,png,jpg,gif|max:4096',
         ]);
 
-        $image = 'uploads/' . $this->request->file('uploaded_image')->store('', ['disk' => 'uploads']);
+        $image = 'uploads/' . $this->request->file('uploaded_image')?->store('', ['disk' => 'uploads']);
 
-        $mask = 'uploads/' . $this->request->file('mask_file')->store('', ['disk' => 'uploads']);
+        $mask = 'uploads/' . $this->request->file('mask_file')?->store('', ['disk' => 'uploads']);
 
         return app(CreateImageEditService::class)
             ->setImages([$image])
             ->setMask($mask)
+            ->setModel($this->getModel())
             ->setPrompt('Remove the areas marked in the mask from the image. Keep the rest of the image intact.')
             ->generate();
     }
@@ -139,12 +147,11 @@ class OpenAIService
             ];
         }
 
-        $service = app(CreateImageEditService::class)
+        return app(CreateImageEditService::class)
             ->setImages($imagePaths)
+            ->setModel($this->getModel())
             ->setPrompt($this->request->input('description'))
             ->generate();
-
-        return $service;
     }
 
     public function setTool(string $tool): self
@@ -159,5 +166,17 @@ class OpenAIService
         $this->request = $request;
 
         return $this;
+    }
+
+    public function setModel(string $model): self
+    {
+        $this->model = $model;
+
+        return $this;
+    }
+
+    public function getModel(): string
+    {
+        return $this->model;
     }
 }

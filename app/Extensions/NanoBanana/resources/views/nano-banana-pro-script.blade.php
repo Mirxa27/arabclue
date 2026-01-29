@@ -88,13 +88,13 @@
                         imageResultTemplate.querySelector('.image-result').setAttribute('data-id', image.id);
                         imageResultTemplate.querySelector('.image-result').classList.remove('lqd-is-loading');
                         imageResultTemplate.querySelector('.image-result').setAttribute(
-                            'data-generator', 'fl');
+                            'data-generator', image.response.substr(0, 2).toLowerCase());
                         imageResultTemplate.querySelector('.lqd-image-result-img')
                             .setAttribute('src', image.output);
                         imageResultTemplate.querySelector('.lqd-image-result-img')
                             .setAttribute('id', image.img_id);
                         imageResultTemplate.querySelector('.lqd-image-result-type')
-                            .innerHTML = 'FL';
+                            .innerHTML = image.response.substr(0, 2).toUpperCase();
                         imageResultTemplate.querySelector('.lqd-image-result-view')
                             .setAttribute('data-payload', JSON.stringify(image));
 

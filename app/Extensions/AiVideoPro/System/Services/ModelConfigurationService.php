@@ -295,13 +295,6 @@ class ModelConfigurationService
                                     self::promptInput(),
                                 ],
                             ],
-                            EntityEnum::KLING_VIDEO->value => [
-                                'label'  => EntityEnum::KLING_VIDEO->label(),
-                                'inputs' => [
-                                    self::videoUpload('video', 'Upload Video'),
-                                    self::promptInput('Enhancement Instructions', 'Describe how to enhance the video...', 3, false),
-                                ],
-                            ],
                         ],
                     ],
                     'kling-v2.5' => [
@@ -320,15 +313,6 @@ class ModelConfigurationService
                                         ['value' => '9:16', 'label' => '9:16 (Portrait)'],
                                         ['value' => '1:1', 'label' => '1:1 (Square)'],
                                     ], '16:9'),
-                                    self::selectInput('camera_movement', __('Camera Movement'), [
-                                        ['value' => '', 'label' => __('None (Auto)')],
-                                        ['value' => 'horizontal', 'label' => __('Horizontal')],
-                                        ['value' => 'vertical', 'label' => __('Vertical')],
-                                        ['value' => 'pan', 'label' => __('Pan')],
-                                        ['value' => 'tilt', 'label' => __('Tilt')],
-                                        ['value' => 'zoom', 'label' => __('Zoom')],
-                                        ['value' => 'roll', 'label' => __('Roll')],
-                                    ], '', __('Optional: Control camera movement in the generated video'), false),
                                     self::seedInput(0, 2147483647),
                                     self::negativePromptInput(),
                                     self::numberInput('cfg_scale', __('CFG Scale'), 0, 1, 0.1, '0.5', __('Guidance scale (0.0-1.0). Higher values follow prompt more closely. Default: 0.5'), false, true),
@@ -369,6 +353,45 @@ class ModelConfigurationService
                                         ['value' => '1:1', 'label' => '1:1 (Square)'],
                                     ], '16:9'),
                                     self::seedInput(0, 2147483647),
+                                    self::negativePromptInput(),
+                                ],
+                            ],
+                        ],
+                    ],
+                    'kling-v2.6' => [
+                        'isActive' => true,
+                        'features' => [
+                            EntityEnum::KLING_2_6_PRO_TTV->value => [
+                                'label'  => EntityEnum::KLING_2_6_PRO_TTV->label(),
+                                'inputs' => [
+                                    self::promptInput('Video Description', 'Describe your video in detail...', 5),
+                                    self::selectInput('kling26pro_duration', __('Duration'), [
+                                        ['value' => '5', 'label' => '5s'],
+                                        ['value' => '10', 'label' => '10s'],
+                                    ], '5', __('Video duration (5 or 10 seconds)')),
+                                    self::aspectRatioSelect([
+                                        ['value' => '16:9', 'label' => '16:9 (Landscape)'],
+                                        ['value' => '9:16', 'label' => '9:16 (Portrait)'],
+                                        ['value' => '1:1', 'label' => '1:1 (Square)'],
+                                    ], '16:9'),
+                                    self::negativePromptInput(),
+                                    self::numberInput('cfg_scale', __('CFG Scale'), 0, 1, 0.1, '0.5', __('Guidance scale (0.0-1.0). Higher values follow prompt more closely. Default: 0.5'), false, true),
+                                ],
+                            ],
+                            EntityEnum::KLING_2_6_PRO_ITV->value => [
+                                'label'  => EntityEnum::KLING_2_6_PRO_ITV->label(),
+                                'inputs' => [
+                                    self::imageUpload(null, 'image_url', __('Upload Image for Image-to-Video')),
+                                    self::promptInput('Video Prompt', 'Describe the video transformation...', 4),
+                                    self::selectInput('kling25pro_duration', __('Duration'), [
+                                        ['value' => '5', 'label' => '5s'],
+                                        ['value' => '10', 'label' => '10s'],
+                                    ], '5', __('Video duration (5 or 10 seconds)')),
+                                    self::aspectRatioSelect([
+                                        ['value' => '16:9', 'label' => '16:9 (Landscape)'],
+                                        ['value' => '9:16', 'label' => '9:16 (Portrait)'],
+                                        ['value' => '1:1', 'label' => '1:1 (Square)'],
+                                    ], '16:9'),
                                     self::negativePromptInput(),
                                 ],
                             ],

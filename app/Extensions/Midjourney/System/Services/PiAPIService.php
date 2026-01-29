@@ -75,19 +75,10 @@ class PiAPIService
         if (! $url) {
             return null;
         }
-
-        // Resmi URL'den indir
         $response = Http::get($url);
-
-        // Eğer dosya başarıyla indirildiyse devam et
         if ($response->successful()) {
-            // Dosya içeriğini al
             $fileContent = $response->body();
-
-            // Dosya uzantısını belirleyin
             $extension = pathinfo($url, PATHINFO_EXTENSION);
-
-            // Eğer dosya adı verilmemişse, bir dosya adı oluşturun
             if (! $filename) {
                 $filename = uniqid('image_') . '.' . $extension;
             } else {
@@ -107,7 +98,6 @@ class PiAPIService
                 return Storage::disk('s3')->url($filename);
             }
 
-            // save file on local storage or aws s3
             Storage::disk('thumbs')->put($filename, $fileContent);
 
             $dump = Storage::disk('public')->put($filename, $fileContent);

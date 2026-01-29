@@ -154,6 +154,6 @@
 </div>
 
 @push('script')
-    <script src="{{ custom_theme_url('/assets/libs/markdown-it.min.js') }}"></script>
+    <script src="{{ custom_theme_url('/assets/libs/markdownit/markdown-it.min.js') }}"></script>
     <script src="{{ custom_theme_url('/assets/js/format-string.js') }}"></script>
 @endpush

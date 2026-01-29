@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Extensions\AIVideoToVideo\System;
 
 use App\Domains\Marketplace\Contracts\UninstallExtensionServiceProviderInterface;
-use App\Extensions\AIVideoToVideo\System\Http\Controllers\FalAISettingController;
 use App\Extensions\AIVideoToVideo\System\Http\Controllers\GenerateController;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Routing\Router;
@@ -98,13 +97,6 @@ class AIVideoToVideoServiceProvider extends ServiceProvider implements Uninstall
                                 $router->any('checked-all', 'checkedAll')->name('checked-all');
                             });
 
-                        $router->controller(FalAISettingController::class)
-                            ->prefix('admin/settings')
-                            ->middleware(['auth', 'admin'])
-                            ->name('admin.settings.')->group(function (Router $router) {
-                                $router->get('fal-ai', 'index')->name('fal-ai');
-                                $router->post('fal-ai', 'update')->name('fal-ai.update');
-                            });
                     });
 
             });

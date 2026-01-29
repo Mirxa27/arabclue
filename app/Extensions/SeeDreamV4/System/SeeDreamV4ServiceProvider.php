@@ -6,7 +6,6 @@ namespace App\Extensions\SeeDreamV4\System;
 
 use App\Domains\Marketplace\Contracts\ExtensionRegisterKeyProviderInterface;
 use App\Domains\Marketplace\Contracts\UninstallExtensionServiceProviderInterface;
-use App\Extensions\SeeDreamV4\System\Http\Controllers\FalAISettingController;
 use App\Extensions\SeeDreamV4\System\Http\Controllers\FalAIWebhookController;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Routing\Router;
@@ -86,14 +85,6 @@ class SeeDreamV4ServiceProvider extends ServiceProvider implements ExtensionRegi
                 $router->any('generator/webhook/fal-ai', FalAIWebhookController::class)
                     ->name('generator.webhook.fal-ai')
                     ->withoutMiddleware(['web', 'auth']);
-
-                $router->controller(FalAISettingController::class)
-                    ->prefix('dashboard/admin/settings')
-                    ->middleware(['auth', 'admin'])
-                    ->name('dashboard.admin.settings.')->group(function (Router $router) {
-                        $router->get('fal-ai', 'index')->name('fal-ai');
-                        $router->post('fal-ai', 'update')->name('fal-ai.update');
-                    });
 
             });
 

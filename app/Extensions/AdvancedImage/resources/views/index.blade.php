@@ -29,7 +29,6 @@
             alt="Background image"
         >
     </div>
-
     <div
         class="lqd-adv-img-editor relative z-1 pt-[--header-h] [--header-h:60px] [--sidebar-w:370px]"
         x-data='advancedImageEditor({

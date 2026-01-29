@@ -119,7 +119,7 @@
 
 @push('script')
     <script src="{{ custom_theme_url('/assets/libs/fslightbox/fslightbox.js') }}"></script>
-    <script src="{{ custom_theme_url('/assets/libs/markdown-it.min.js') }}"></script>
+    <script src="{{ custom_theme_url('/assets/libs/markdownit/markdown-it.min.js') }}"></script>
     @if (\App\Helpers\Classes\MarketplaceHelper::isRegistered('chatbot-agent'))
         <script src="https://js.pusher.com/8.2.0/pusher.min.js"></script>
     @endif

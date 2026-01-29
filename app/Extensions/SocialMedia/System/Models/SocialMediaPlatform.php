@@ -15,6 +15,7 @@ class SocialMediaPlatform extends Model
         'user_id',
         'platform',
         'credentials',
+        'followers_count',
         'connected_at',
         'expires_at',
     ];
@@ -23,6 +24,7 @@ class SocialMediaPlatform extends Model
         'credentials'  => 'array',
         'connected_at' => 'datetime',
         'expires_at'   => 'datetime',
+        'followers_count' => 'integer',
     ];
 
     public function scopeConnected(Builder $builder)

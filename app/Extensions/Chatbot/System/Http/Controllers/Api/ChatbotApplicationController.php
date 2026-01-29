@@ -20,6 +20,7 @@ use App\Helpers\Classes\RateLimiter\RateLimiter;
 use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use Exception;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -262,7 +263,7 @@ class ChatbotApplicationController extends Controller
 
         $chatbotConversation = ChatbotConversation::query()
             ->create([
-                'conversation_name'    => $customer->name ?: 'Anonymous User',
+                'conversation_name'    => $customer?->name ?: 'Anonymous User',
                 'chatbot_channel'      => 'frame',
                 'is_showed_on_history' => false,
                 'ip_address'           => Helper::getRequestIp(),
@@ -454,7 +455,7 @@ class ChatbotApplicationController extends Controller
     }
 
     protected function insertMessage(
-        ChatbotConversation $conversation,
+        ChatbotConversation|Model $conversation,
         ?string $message,
         string $role,
         string $model,

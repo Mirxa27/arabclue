@@ -4,6 +4,8 @@ namespace App\Extensions\SocialMedia\System\Http\Controllers\Oauth;
 
 use App\Extensions\SocialMedia\System\Enums\PlatformEnum;
 use App\Extensions\SocialMedia\System\Helpers\Instagram;
+use App\Extensions\SocialMedia\System\Http\Controllers\Oauth\Traits\HasBackRoute;
+use App\Extensions\SocialMedia\System\Http\Controllers\Oauth\Traits\HasSaveImage;
 use App\Extensions\SocialMedia\System\Models\SocialMediaPlatform;
 use App\Helpers\Classes\Helper;
 use App\Http\Controllers\Controller;
@@ -13,6 +15,9 @@ use Illuminate\Support\Facades\Auth;
 
 class InstagramController extends Controller
 {
+    use HasBackRoute;
+    use HasSaveImage;
+
     private function cacheKey(): string
     {
         return 'platforms.' . Auth::id() . '.instagram';
@@ -26,6 +31,8 @@ class InstagramController extends Controller
                 'message' => trans('This feature is disabled in demo mode.'),
             ]);
         }
+
+        $this->setBackCacheRoute();
 
         if (setting('INSTAGRAM_APP_ID') && setting('INSTAGRAM_APP_SECRET')) {
             if ($request->has('platform_id') && $request->get('platform_id')) {
@@ -55,7 +62,7 @@ class InstagramController extends Controller
         $code = $request->get('code');
 
         if (! $code) {
-            return redirect()->route('dashboard.user.social-media.platforms')
+            return redirect()->route($this->getBackCacheRoute())
                 ->with([
                     'type'    => 'error',
                     'message' => trans('Something went wrong, please try again.'),
@@ -73,7 +80,7 @@ class InstagramController extends Controller
                 ->throw()
                 ->json('data.0');
         } catch (Exception $exception) {
-            return redirect()->route('dashboard.user.social-media.platforms')
+            return redirect()->route($this->getBackCacheRoute())
                 ->with([
                     'type'    => 'error',
                     'message' => 'Something went wrong, please try again.',
@@ -81,16 +88,18 @@ class InstagramController extends Controller
         }
 
         if (! isset($page['connected_instagram_account'])) {
-            return redirect()->route('dashboard.user.social-media.platforms')
+            return redirect()->route($this->getBackCacheRoute())
                 ->with([
                     'type'    => 'error',
                     'message' => trans('Something went wrong, please try again.'),
                 ]);
         }
 
-        $igAccount = $instagram->getInstagramInfo($page['connected_instagram_account']['id'], ['id,name,username,profile_picture_url'])
+        $igAccount = $instagram->getInstagramInfo($page['connected_instagram_account']['id'], ['id,name,username,profile_picture_url,followers_count'])
             ->throw()
             ->json();
+
+        $followersCount = (int) ($igAccount['followers_count'] ?? 0);
 
         $platformId = cache($this->cacheKey());
 
@@ -115,6 +124,7 @@ class InstagramController extends Controller
                     ],
                     'connected_at' => now(),
                     'expires_at'   => now()->addMonths(2),
+                    'followers_count' => $followersCount,
                 ]);
             }
 
@@ -134,10 +144,11 @@ class InstagramController extends Controller
                 ],
                 'connected_at' => now(),
                 'expires_at'   => now()->addMonths(2),
+                'followers_count' => $followersCount,
             ]);
         }
 
-        return to_route('dashboard.user.social-media.platforms')->with([
+        return to_route($this->getBackCacheRoute())->with([
             'type'    => 'success',
             'message' => trans('Instagram account connected successfully.'),
         ]);

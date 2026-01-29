@@ -103,17 +103,30 @@
         </p>
         <p class="mb-0 flex items-center justify-between gap-1 border-b py-4 text-foreground/60">
             {{ __('Created') }}
-            <span
-                class="max-w-[65%] overflow-hidden text-ellipsis whitespace-nowrap text-end capitalize text-foreground"
-                x-text="activeChat?.created_at ? getDiffHumanTime(activeChat?.created_at) : '---'"
-            ></span>
+			@if(\App\Helpers\Classes\Helper::appIsDemo())
+				<span
+					class="max-w-[65%] overflow-hidden text-ellipsis whitespace-nowrap text-end capitalize text-foreground"
+				>{{ trans('1 hour ago') }}</span>
+			@else
+				<span
+					class="max-w-[65%] overflow-hidden text-ellipsis whitespace-nowrap text-end capitalize text-foreground"
+					x-text="activeChat?.created_at ? getDiffHumanTime(activeChat?.created_at) : '---'"
+				></span>
+			@endif
+
         </p>
         <p class="mb-0 flex items-center justify-between gap-1 border-b py-4 text-foreground/60">
             {{ __('Updated') }}
-            <span
-                class="max-w-[65%] overflow-hidden text-ellipsis whitespace-nowrap text-end capitalize text-foreground"
-                x-text="activeChat?.lastMessage?.created_at ? getDiffHumanTime(activeChat?.lastMessage.created_at) : '---'"
-            ></span>
+			@if(\App\Helpers\Classes\Helper::appIsDemo())
+				<span
+					class="max-w-[65%] overflow-hidden text-ellipsis whitespace-nowrap text-end capitalize text-foreground"
+				>{{ trans('1 hour ago') }}</span>
+			@else
+				<span
+					class="max-w-[65%] overflow-hidden text-ellipsis whitespace-nowrap text-end capitalize text-foreground"
+					x-text="activeChat?.lastMessage?.updated_at ? getDiffHumanTime(activeChat?.lastMessage.updated_at) : '---'"
+				></span>
+			@endif
         </p>
         <p class="mb-0 flex items-center justify-between gap-1 py-4 text-foreground/60">
             {{ __('IP Address') }}

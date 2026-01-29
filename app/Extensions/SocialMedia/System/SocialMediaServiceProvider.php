@@ -8,7 +8,6 @@ use App\Domains\Marketplace\Contracts\UninstallExtensionServiceProviderInterface
 use App\Extensions\SocialMedia\System\Http\Controllers\Common\DemoDataController;
 use App\Extensions\SocialMedia\System\Http\Controllers\Common\SocialMediaCampaignCommonController;
 use App\Extensions\SocialMedia\System\Http\Controllers\Common\SocialMediaCompanyCommonController;
-use App\Extensions\SocialMedia\System\Http\Controllers\FalAISettingController;
 use App\Extensions\SocialMedia\System\Http\Controllers\ImageStatusController;
 use App\Extensions\SocialMedia\System\Http\Controllers\Oauth\FacebookController;
 use App\Extensions\SocialMedia\System\Http\Controllers\Oauth\InstagramController;
@@ -58,6 +57,8 @@ class SocialMediaServiceProvider extends ServiceProvider implements UninstallExt
                 Console\Commands\XPostMetricsCommand::class,
                 Console\Commands\FacebookPostMetricsCommand::class,
                 Console\Commands\InstagramPostMetricsCommand::class,
+                Console\Commands\SocialMediaDailyMetricsCommand::class,
+                Console\Commands\SocialMediaFollowersSyncCommand::class,
             ]);
 
             $this->app->booted(function () {
@@ -66,6 +67,8 @@ class SocialMediaServiceProvider extends ServiceProvider implements UninstallExt
                 $schedule->command('app:social-media-x-refresh')->everyThreeMinutes();
                 $schedule->command('app:social-media-facebook-post-metrics')->everyThreeMinutes();
                 $schedule->command('app:social-media-instagram-post-metrics')->everyThreeMinutes();
+                $schedule->command('app:social-media-daily-metrics')->hourly();
+				$schedule->command('php artisan app:social-media-sync-followers')->hourly();
             });
         }
 
@@ -207,13 +210,6 @@ class SocialMediaServiceProvider extends ServiceProvider implements UninstallExt
                         Route::post('{platform}/update', 'update')->name('update');
                     });
 
-                $router->controller(FalAISettingController::class)
-                    ->prefix('dashboard/admin/settings')
-                    ->middleware(['auth', 'admin'])
-                    ->name('dashboard.admin.settings.')->group(function (Router $router) {
-                        $router->get('fal-ai', 'index')->name('fal-ai');
-                        $router->post('fal-ai', 'update')->name('fal-ai.update');
-                    });
             });
 
         return $this;

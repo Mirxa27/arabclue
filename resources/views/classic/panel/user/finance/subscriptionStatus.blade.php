@@ -7,7 +7,7 @@
     $teamManager = auth()->user()->getAttribute('teamManager');
 @endphp
 
-@if ($team)
+@if ($team && $team?->allow_seats > 0)
     <div class="flex flex-wrap items-center justify-between gap-y-4 text-base font-medium leading-normal">
         <div class="lg-w/5-12 w-full md:w-1/2">
             <h2 class="mb-[1em]">{{ __('Active Workspace:') }}</h2>

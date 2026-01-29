@@ -74,6 +74,16 @@ class Facebook extends BaseMetaHelper
         return Http::get($apiUrl);
     }
 
+    public function getPageProfile(string $pageId, array $fields = []): Response
+    {
+        $apiUrl = $this->apiUrl($pageId, [
+            'access_token' => $this->accessToken,
+            'fields'       => collect($fields)->join(','),
+        ]);
+
+        return Http::get($apiUrl);
+    }
+
     public function publishTextOnPage(int $pageId, string $text): Response
     {
         return Http::withToken($this->accessToken)

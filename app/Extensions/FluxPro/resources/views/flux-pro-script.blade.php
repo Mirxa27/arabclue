@@ -13,8 +13,8 @@
         submitBtn.disabled = true;
 
         @if ($openai->type == 'image')
-        var imageGenerator = document.querySelector('[data-generator-name][data-active=true]')?.getAttribute(
-            'data-generator-name');
+            var imageGenerator = document.querySelector('[data-generator-name][data-active=true]')?.getAttribute(
+                'data-generator-name');
         @endif
         var formData = new FormData();
         formData.append('post_type', '{{ $openai->slug }}');
@@ -50,21 +50,21 @@
             success: function(res) {
 
                 if (res.status !== 'success' && (res.message)) {
-					document.getElementById("flux_generator_button").disabled = false;
-					document.getElementById("flux_generator_button").innerHTML = "Regenerate";
+                    document.getElementById("flux_generator_button").disabled = false;
+                    document.getElementById("flux_generator_button").innerHTML = "Regenerate";
 
-					toastr.error(res.message);
+                    toastr.error(res.message);
                     hideLoadingIndicators();
                     return;
                 }
 
-//show successful message
+                //show successful message
                 @if ($openai->type == 'image')
-                toastr.success(`Image Generated Successfully in ${res.image_storage}`);
+                    toastr.success(`Image Generated Successfully in ${res.image_storage}`);
                 @elseif ($openai->type == 'video')
                     resultVideoId = res.id;
                 @else
-                toastr.success("{{ __('Generated Successfully!') }}");
+                    toastr.success("{{ __('Generated Successfully!') }}");
                 @endif
 
                 document.getElementById("flux_generator_button").disabled = false;
@@ -74,112 +74,113 @@
                 setTimeout(function() {
                     @if ($openai->type == 'image')
 
-                    const images = res.images;
-                    const currenturl = window.location.href;
-                    const server = currenturl.split('/')[0];
-                    const imageContainer = document.querySelector('.image-results');
-                    const imageResultTemplate = document.querySelector('#image_result').content
-                        .cloneNode(true);
+                        const images = res.images;
+                        const currenturl = window.location.href;
+                        const server = currenturl.split('/')[0];
+                        const imageContainer = document.querySelector('.image-results');
+                        const imageResultTemplate = document.querySelector('#image_result').content
+                            .cloneNode(true);
 
-                    images.forEach((image) => {
-                        const delete_url =
-                            `${server}/dashboard/user/openai/documents/delete/image/${image.slug}`;
+                        images.forEach((image) => {
+                            const delete_url =
+                                `${server}/dashboard/user/openai/documents/delete/image/${image.slug}`;
 
-                        imageResultTemplate.querySelector('.image-result').setAttribute('data-id', image.id);
-                        imageResultTemplate.querySelector('.image-result').classList.remove('lqd-is-loading');
-                        imageResultTemplate.querySelector('.image-result').setAttribute(
-                            'data-generator', 'fl');
-                        imageResultTemplate.querySelector('.lqd-image-result-img')
-                            .setAttribute('src', image.output);
-                        imageResultTemplate.querySelector('.lqd-image-result-img')
-                            .setAttribute('id', image.img_id);
-                        imageResultTemplate.querySelector('.lqd-image-result-type')
-                            .innerHTML = 'FL';
-                        imageResultTemplate.querySelector('.lqd-image-result-view')
-                            .setAttribute('data-payload', JSON.stringify(image));
+                            imageResultTemplate.querySelector('.image-result').setAttribute('data-id', image.id);
+                            imageResultTemplate.querySelector('.image-result').classList.remove('lqd-is-loading');
+                            imageResultTemplate.querySelector('.image-result').classList.add('lqd-image-result-in-queue');
+                            imageResultTemplate.querySelector('.image-result').setAttribute(
+                                'data-generator', image.response.substr(0, 2).toLowerCase());
+                            imageResultTemplate.querySelector('.lqd-image-result-img')
+                                .setAttribute('src', image.output);
+                            imageResultTemplate.querySelector('.lqd-image-result-img')
+                                .setAttribute('id', image.img_id);
+                            imageResultTemplate.querySelector('.lqd-image-result-type')
+                                .innerHTML = image.response.substr(0, 2).toUpperCase();
+                            imageResultTemplate.querySelector('.lqd-image-result-view')
+                                .setAttribute('data-payload', JSON.stringify(image));
 
-                        imageResultTemplate.querySelector('.lqd-image-result-view')
-                            .setAttribute('id', image.img_id + '-payload');
+                            imageResultTemplate.querySelector('.lqd-image-result-view')
+                                .setAttribute('id', image.img_id + '-payload');
 
-                        imageResultTemplate.querySelector('.lqd-image-result-delete')
-                            .setAttribute('href', delete_url);
-                        imageResultTemplate.querySelector('.lqd-image-result-download')
-                            .setAttribute('href', image.output);
-                        imageResultTemplate.querySelector('.lqd-image-result-download')
-                            .setAttribute('id', image.img_id + '-download');
+                            imageResultTemplate.querySelector('.lqd-image-result-delete')
+                                .setAttribute('href', delete_url);
+                            imageResultTemplate.querySelector('.lqd-image-result-download')
+                                .setAttribute('href', image.output);
+                            imageResultTemplate.querySelector('.lqd-image-result-download')
+                                .setAttribute('id', image.img_id + '-download');
 
-                        imageResultTemplate.querySelector('.lqd-image-result-download')
-                            .setAttribute('download', image.slug);
+                            imageResultTemplate.querySelector('.lqd-image-result-download')
+                                .setAttribute('download', image.slug);
 
-                        imageResultTemplate.querySelector('.lqd-image-result-title')
-                            .setAttribute('title', image.input);
-                        imageResultTemplate.querySelector('.lqd-image-result-title')
-                            .innerText = image.input;
-                        imageContainer.insertBefore(imageResultTemplate, imageContainer
-                            .firstChild);
+                            imageResultTemplate.querySelector('.lqd-image-result-title')
+                                .setAttribute('title', image.input);
+                            imageResultTemplate.querySelector('.lqd-image-result-title')
+                                .innerText = image.input;
+                            imageContainer.insertBefore(imageResultTemplate, imageContainer
+                                .firstChild);
 
-                    })
-                    @if ($openai->type != 'image')
-                    refreshFsLightbox();
-                    @endif
-                            @elseif ($openai->type == 'video')
+                        })
+                        @if ($openai->type != 'image')
+                            refreshFsLightbox();
+                        @endif
+                    @elseif ($openai->type == 'video')
                         sourceImgUrl = res.sourceUrl;
-                    intervalId = setInterval(checkVideoDone, 10000);
+                        intervalId = setInterval(checkVideoDone, 10000);
                     @elseif ($openai->type == 'audio' || $openai->type == 'isolator')
-                    $("#generator_sidebar_table").html(res?.data?.html2 || res.html2);
-                    var audioElements = document.querySelectorAll('.data-audio');
-                    if (audioElements.length) {
-                        audioElements.forEach(generateWaveForm);
-                    }
+                        $("#generator_sidebar_table").html(res?.data?.html2 || res.html2);
+                        var audioElements = document.querySelectorAll('.data-audio');
+                        if (audioElements.length) {
+                            audioElements.forEach(generateWaveForm);
+                        }
                     @else
-                    if ($("#code-output").length) {
-                        $("#workbook_textarea").html(res.data.html2);
-                        const codeLang = document.querySelector('#code_lang');
-                        const codePre = document.querySelector('#code-pre');
-                        const codeOutput = codePre?.querySelector('#code-output');
+                        if ($("#code-output").length) {
+                            $("#workbook_textarea").html(res.data.html2);
+                            const codeLang = document.querySelector('#code_lang');
+                            const codePre = document.querySelector('#code-pre');
+                            const codeOutput = codePre?.querySelector('#code-output');
 
-                        if (codeOutput) {
-                            let codeOutputText = codeOutput.textContent;
-                            const codeBlocks = codeOutputText.match(/```[A-Za-z_]*\n[\s\S]+?```/g);
-                            if (codeBlocks) {
-                                codeBlocks.forEach((block) => {
-                                    const language = block.match(/```([A-Za-z_]*)/)[1];
-                                    const code = block.replace(/```[A-Za-z_]*\n/, '').replace(/```/, '').replace(/&/g, '&amp;').replace(/</g,
-                                        '&lt;').replace(/>/g, '&gt;').replace(
-                                        /"/g, '&quot;').replace(/'/g, '&#039;');
-                                    const wrappedCode = `<pre><code class="language-${language}">${code}</code></pre>`;
-                                    codeOutputText = codeOutputText.replace(block, wrappedCode);
+                            if (codeOutput) {
+                                let codeOutputText = codeOutput.textContent;
+                                const codeBlocks = codeOutputText.match(/```[A-Za-z_]*\n[\s\S]+?```/g);
+                                if (codeBlocks) {
+                                    codeBlocks.forEach((block) => {
+                                        const language = block.match(/```([A-Za-z_]*)/)[1];
+                                        const code = block.replace(/```[A-Za-z_]*\n/, '').replace(/```/, '').replace(/&/g, '&amp;').replace(/</g,
+                                            '&lt;').replace(/>/g, '&gt;').replace(
+                                            /"/g, '&quot;').replace(/'/g, '&#039;');
+                                        const wrappedCode = `<pre><code class="language-${language}">${code}</code></pre>`;
+                                        codeOutputText = codeOutputText.replace(block, wrappedCode);
+                                    });
+                                }
+
+                                codePre.innerHTML = codeOutputText;
+
+                                codePre.querySelectorAll('pre').forEach(pre => {
+                                    pre.classList.add(`language-${codeLang && codeLang.value !== '' ? codeLang.value : 'javascript'}`);
+                                })
+
+                                // saving for copy
+                                window.codeRaw = codeOutput.innerText;
+
+                                codePre.querySelectorAll('code').forEach(block => {
+                                    Prism.highlightElement(block);
                                 });
-                            }
-
-                            codePre.innerHTML = codeOutputText;
-
-                            codePre.querySelectorAll('pre').forEach(pre => {
-                                pre.classList.add(`language-${codeLang && codeLang.value !== '' ? codeLang.value : 'javascript'}`);
-                            })
-
-                            // saving for copy
-                            window.codeRaw = codeOutput.innerText;
-
-                            codePre.querySelectorAll('code').forEach(block => {
-                                Prism.highlightElement(block);
-                            });
-                        };
-                    } else {
-                        tinymce.activeEditor.destroy();
-                        if (res.data) {
+                            };
+                        } else {
+                            tinymce.activeEditor.destroy();
+                            if (res.data) {
                                 $("#generator_sidebar_table").html(res.data.html2 ?? res.data.html);
                             } else {
                                 $("#generator_sidebar_table").html(res.html2 ?? res.html);
                             }
-                        getResult();
-                    }
+                            getResult();
+                        }
                     @endif
                     @if ($openai->type != 'video')
-                    hideLoadingIndicators();
+                        hideLoadingIndicators();
                     @endif
                     @if ($openai->type != 'image')
-                    refreshFsLightbox();
+                        refreshFsLightbox();
                     @endif
                 }, 750);
             },
@@ -196,11 +197,11 @@
                     toastr.error(data.responseJSON.message);
                 }
 
-				return false;
+                return false;
             }
         });
 
-		return false;
+        return false;
     }
 
 
@@ -208,13 +209,13 @@
         fetch('/dashboard/user/openai/generator/check/status')
             .then(response => response.json())
             .then(data => {
-                // console.log(data);
-                if(data.data) {
+                if (data.data) {
                     for (const [id, item] of Object.entries(data.data)) {
                         let imgElement = document.getElementById(item.imgId);
                         let imgElementPayloadId = document.getElementById(item.payloadId);
-                        let imgElementDownload = document.getElementById(item.imgId+'-download');
+                        let imgElementDownload = document.getElementById(item.imgId + '-download');
                         if (imgElement) {
+                            imgElement.closest('.image-result')?.classList?.remove('lqd-image-result-in-queue');
                             imgElement.src = item.img;
                             imgElementDownload.setAttribute('href', item.img)
                             imgElementDownload.setAttribute('target', '_blank')
@@ -228,7 +229,7 @@
             .catch(error => console.error('Error:', error));
     }
 
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function() {
         setInterval(checkImageStatus, 5000);
     });
 </script>

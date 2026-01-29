@@ -30,6 +30,13 @@ class AiVideoProController extends Controller
 
     private const RANDOM_STRING_LENGTH = 12;
 
+    private PackageFalAIService $falAIService;
+
+    public function __construct()
+    {
+        $this->falAIService = new PackageFalAIService(ApiHelper::setFalAIKey());
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -177,8 +184,7 @@ class AiVideoProController extends Controller
         }
 
         $payload = $this->buildVeoPayload($validated);
-        $service = new PackageFalAIService(ApiHelper::setFalAIKey());
-        $response = $service->textToVideoModel($entityEnum)->submit($payload);
+        $response = $this->falAIService->textToVideoModel($entityEnum)->submit($payload);
         $resData = $response->getData();
 
         if (isset($resData->status) && $resData->status === 'error') {
@@ -228,9 +234,17 @@ class AiVideoProController extends Controller
     private function handleKling(array $validated, EntityEnum $entityEnum, $driver): RedirectResponse
     {
         $legacyFeatures = ['kling', 'klingImage', 'klingV21', 'kling-video'];
+        $kling26ProFeatures = [
+            EntityEnum::KLING_2_6_PRO_TTV->value,
+            EntityEnum::KLING_2_6_PRO_ITV->value,
+        ];
 
         if (in_array($validated['feature'], $legacyFeatures, true)) {
             return $this->handleLegacyKling($validated, $entityEnum, $driver);
+        }
+
+        if (in_array($validated['feature'], $kling26ProFeatures, true)) {
+            return $this->handleKling26Pro($validated, $entityEnum, $driver);
         }
 
         return $this->handleKling25($validated, $entityEnum, $driver);
@@ -275,8 +289,31 @@ class AiVideoProController extends Controller
     {
         $payload = $this->buildKling25Payload($validated);
 
-        $service = new PackageFalAIService(ApiHelper::setFalAIKey());
-        $response = $service->textToVideoModel($entityEnum)->submit($payload);
+        $response = $this->falAIService->textToVideoModel($entityEnum)->submit($payload);
+        $resData = $response->getData();
+
+        if (isset($resData->status) && $resData->status === 'error') {
+            return $this->errorResponse($resData->message ?? __('Kling generation failed'));
+        }
+
+        $this->createUserFall(
+            auth()->id(),
+            $validated['prompt'],
+            $validated['feature'],
+            (array) $resData->resData,
+            $payload['image_url'] ?? null
+        );
+
+        $driver->decreaseCredit();
+
+        return $this->successResponse(__('Kling video generation started successfully.'));
+    }
+
+    private function handleKling26Pro(array $validated, EntityEnum $entityEnum, $driver): RedirectResponse
+    {
+        $payload = $this->buildKling26ProPayload($validated);
+
+        $response = $this->falAIService->textToVideoModel($entityEnum)->submit($payload);
         $resData = $response->getData();
 
         if (isset($resData->status) && $resData->status === 'error') {
@@ -446,6 +483,31 @@ class AiVideoProController extends Controller
         return $this->removeEmptyValues($payload);
     }
 
+    private function buildKling26ProPayload(array $validated): array
+    {
+        $payload = [
+            'prompt'       => $validated['prompt'],
+            'duration'     => (int) ($validated['kling26pro_duration'] ?? 5),
+            'aspect_ratio' => $validated['kling26pro_aspect_ratio'] ?? '16:9',
+        ];
+
+        $feature = $validated['feature'];
+
+        // Handle image upload for image-to-video modes
+        if (isset($validated['image_url']) && str_contains($feature, 'image-to-video')) {
+            $payload['image_url'] = $this->uploadSingleFile($validated, 'image_url', true);
+        }
+
+        if (isset($validated['cfg_scale'])) {
+            $payload['cfg_scale'] = (float) $validated['cfg_scale'];
+        }
+
+        if (! empty($validated['negative_prompt'])) {
+            $payload['negative_prompt'] = $validated['negative_prompt'];
+        }
+
+        return $this->removeEmptyValues($payload);
+    }
     // ============== FILE UPLOAD HELPERS ==============
 
     private function uploadSingleFile(array $validated, string $fieldName, bool $returnUrl = false): ?string
@@ -595,10 +657,11 @@ class AiVideoProController extends Controller
 
         foreach ($entries as $entry) {
             $result = match (true) {
-                str_starts_with($entry->model ?? '', 'sora')             => $this->handleSoraEntry($entry),
-                str_starts_with($entry->model ?? '', 'veo3.1/')          => $this->handleVeoEntry($entry),
-                str_starts_with($entry->model ?? '', 'kling-2.5-turbo/') => $this->handleKling25Entry($entry),
-                default                                                  => $this->handleFalEntry($entry),
+                str_starts_with($entry->model ?? '', 'sora')                  => $this->handleSoraEntry($entry),
+                str_starts_with($entry->model ?? '', 'veo3.1/')               => $this->handleVeoEntry($entry),
+                str_starts_with($entry->model ?? '', 'kling-2.5-turbo/')      => $this->handleKling25Entry($entry),
+                str_starts_with($entry->model ?? '', 'kling-video/v2.6/pro/') => $this->handleKling26ProEntry($entry),
+                default                                                       => $this->handleFalEntry($entry),
             };
 
             if ($result) {
@@ -636,8 +699,7 @@ class AiVideoProController extends Controller
         // Extract mode from model string (e.g., "veo3.1/text-to-video-fast" -> "text-to-video-fast")
         $mode = str_replace('veo3.1/', '', $entry->model);
         $entity = $this->detectVeo31EntityEnum($mode);
-        $service = new PackageFalAIService(ApiHelper::setFalAIKey());
-        $check = $service->textToVideoModel($entity)->checkStatus($entry->request_id)->getData();
+        $check = $this->falAIService->textToVideoModel($entity)->checkStatus($entry->request_id)->getData();
         $status = $check->resData->status ?? null;
 
         if ($status === 'NOT_FOUND') {
@@ -650,7 +712,7 @@ class AiVideoProController extends Controller
             return null;
         }
 
-        $result = $service->textToVideoModel($entity)->getResult($entry->request_id)->getData();
+        $result = $this->falAIService->textToVideoModel($entity)->getResult($entry->request_id)->getData();
 
         if (($result->status ?? null) === 'success') {
             $videoUrl = $result->resData->video->url ?? null;
@@ -674,15 +736,45 @@ class AiVideoProController extends Controller
         $mode = str_replace('kling-2.5-turbo/', '', $entry->model);
         $entity = $this->detectKling25EntityEnum($mode);
 
-        $service = new PackageFalAIService(ApiHelper::setFalAIKey());
-        $check = $service->textToVideoModel($entity)->checkStatus($entry->request_id)->getData();
+        $check = $this->falAIService->textToVideoModel($entity)->checkStatus($entry->request_id)->getData();
         $status = $check->resData->status ?? null;
 
         if ($status !== 'COMPLETED') {
             return null;
         }
 
-        $result = $service->textToVideoModel($entity)->getResult($entry->request_id)->getData();
+        $result = $this->falAIService->textToVideoModel($entity)->getResult($entry->request_id)->getData();
+
+        if (($result->status ?? null) === 'success') {
+            $videoUrl = $result->resData->video->url ?? null;
+            if ($videoUrl) {
+                $entry->update(['status' => 'complete', 'video_url' => $videoUrl]);
+
+                return $this->renderVideoItem($entry, $videoUrl);
+            }
+        }
+
+        if (in_array(($result->status ?? null), ['failed', 'error'])) {
+            $entry->delete();
+        }
+
+        return null;
+    }
+
+    private function handleKling26ProEntry($entry): ?array
+    {
+        // Extract mode from model string (e.g., "kling-2.5-turbo/text-to-video" -> "text-to-video")
+        $mode = str_replace('kling-video/v2.6/pro/', '', $entry->model);
+        $entity = $this->detectKling26ProEntityEnum($mode);
+
+        $check = $this->falAIService->textToVideoModel($entity)->checkStatus($entry->request_id)->getData();
+        $status = $check->resData->status ?? null;
+
+        if ($status !== 'COMPLETED') {
+            return null;
+        }
+
+        $result = $this->falAIService->textToVideoModel($entity)->getResult($entry->request_id)->getData();
 
         if (($result->status ?? null) === 'success') {
             $videoUrl = $result->resData->video->url ?? null;
@@ -745,6 +837,14 @@ class AiVideoProController extends Controller
             'image-to-video'     => EntityEnum::KLING_2_5_TURBO_STANDARD_ITV,
             'image-to-video-pro' => EntityEnum::KLING_2_5_TURBO_PRO_ITV,
             default              => EntityEnum::KLING_2_5_TURBO_PRO_TTV, // text-to-video as default
+        };
+    }
+
+    private function detectKling26ProEntityEnum(?string $mode): EntityEnum
+    {
+        return match ($mode) {
+            'image-to-video' => EntityEnum::KLING_2_6_PRO_ITV,
+            default          => EntityEnum::KLING_2_6_PRO_TTV, // text-to-video as default
         };
     }
 

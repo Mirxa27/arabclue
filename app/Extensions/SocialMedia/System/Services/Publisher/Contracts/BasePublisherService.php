@@ -75,6 +75,8 @@ class BasePublisherService
                     'posted_at' => now(),
                 ]);
 
+                $this->post->agentPostPublished($publishId);
+
                 SocialMediaSharedLog::query()->create([
                     'social_media_post_id' => $this->post->id,
                     'response'             => [
@@ -107,6 +109,8 @@ class BasePublisherService
                     'posted_at' => now(),
                 ]);
 
+                $this->post->agentPostPublished($publishId);
+
                 SocialMediaSharedLog::query()->create([
                     'social_media_post_id' => $this->post->id,
                     'response'             => [
@@ -131,6 +135,17 @@ class BasePublisherService
         if ($error || ! $isPublished) {
             $this->post->update([
                 'status'       => StatusEnum::failed->value,
+            ]);
+
+            $this->post->agentPostFailed($error ?: 'Unknown error occurred.');
+
+            SocialMediaSharedLog::query()->create([
+                'social_media_post_id' => $this->post->id,
+                'response'             => [
+                    'message' => $error ?: 'Unknown error occurred.',
+                ],
+                'status'     => LogStatusEnum::failed,
+                'created_at' => now(),
             ]);
         }
 

@@ -4,6 +4,8 @@ namespace App\Extensions\SocialMedia\System\Http\Controllers\Oauth;
 
 use App\Extensions\SocialMedia\System\Enums\PlatformEnum;
 use App\Extensions\SocialMedia\System\Helpers\Facebook;
+use App\Extensions\SocialMedia\System\Http\Controllers\Oauth\Traits\HasBackRoute;
+use App\Extensions\SocialMedia\System\Http\Controllers\Oauth\Traits\HasSaveImage;
 use App\Extensions\SocialMedia\System\Models\SocialMediaPlatform;
 use App\Helpers\Classes\Helper;
 use App\Http\Controllers\Controller;
@@ -15,6 +17,9 @@ use Illuminate\Support\Facades\Auth;
 
 class FacebookController extends Controller
 {
+    use HasBackRoute;
+    use HasSaveImage;
+
     private function cacheKey(): string
     {
         return 'platforms.' . Auth::id() . '.facebook';
@@ -28,6 +33,8 @@ class FacebookController extends Controller
                 'message' => trans('This feature is disabled in demo mode.'),
             ]);
         }
+
+        $this->setBackCacheRoute();
 
         if (setting('FACEBOOK_APP_ID') && setting('FACEBOOK_APP_SECRET')) {
 
@@ -60,7 +67,7 @@ class FacebookController extends Controller
         $code = $request->get('code');
 
         if (! $code) {
-            return redirect()->route('dashboard.user.social-media.platforms')
+            return redirect()->route($this->getBackCacheRoute())
                 ->with([
                     'type'    => 'error',
                     'message' => 'Something went wrong, please try again.',
@@ -73,12 +80,12 @@ class FacebookController extends Controller
 
             $fb->setToken($token);
 
-            $page = $fb->getPagesInfo(['name,username,picture,access_token'])->throw()->json('data');
+            $page = $fb->getPagesInfo(['name,username,picture,access_token,followers_count,fan_count'])->throw()->json('data');
 
             $page = Arr::first($page);
 
             if (! $page) {
-                return redirect()->route('dashboard.user.social-media.platforms')
+                return redirect()->route($this->getBackCacheRoute())
                     ->with([
                         'type'    => 'error',
                         'message' => 'Something went wrong, please try again.',
@@ -86,7 +93,7 @@ class FacebookController extends Controller
             }
 
         } catch (Exception $exception) {
-            return redirect()->route('dashboard.user.social-media.platforms')
+            return redirect()->route($this->getBackCacheRoute())
                 ->with([
                     'type'    => 'error',
                     'message' => 'Something went wrong, please try again.',
@@ -94,12 +101,17 @@ class FacebookController extends Controller
         }
 
         $platformId = cache($this->cacheKey());
+        $followersCount = (int) (
+            data_get($page, 'followers_count')
+            ?? data_get($page, 'fan_count')
+            ?? 0
+        );
 
         if ($platformId && is_numeric($platformId)) {
             $platform = SocialMediaPlatform::query()
                 ->where('id', $platformId)
                 ->where('user_id', Auth::id())
-                ->where('platform', PlatformEnum::instagram->value)
+                ->where('platform', PlatformEnum::facebook->value)
                 ->first();
 
             if ($platform) {
@@ -109,7 +121,7 @@ class FacebookController extends Controller
                         'platform_id'             => data_get($page, 'id'),
                         'name'                    => data_get($page, 'name'),
                         'username'                => data_get($page, 'username'),
-                        'picture'                 => data_get($page, 'picture.data.url'),
+                        'picture'                 => self::downloadImageToStorage(data_get($page, 'picture.data.url')),
 
                         'access_token'           => data_get($page, 'access_token'),
                         'access_token_expire_at' => config('social-media.facebook.access_token_expire_at', now()->addDay()),
@@ -117,14 +129,16 @@ class FacebookController extends Controller
                         'refresh_token'           => data_get($page, 'access_token'),
                         'refresh_token_expire_at' => config('social-media.facebook.access_token_expire_at', now()->addDay()),
                     ],
-                    'connected_at' => now(),
-                    'expires_at'   => config('social-media.facebook.access_token_expire_at', now()->addDay()),
+                    'connected_at'     => now(),
+                    'expires_at'       => config('social-media.facebook.access_token_expire_at', now()->addDay()),
+                    'followers_count'  => $followersCount,
                 ]);
             }
 
             cache()->forget($this->cacheKey());
 
         } else {
+
             SocialMediaPlatform::query()->create([
                 'user_id'     => Auth::id(),
                 'platform'    => PlatformEnum::facebook->value,
@@ -133,7 +147,7 @@ class FacebookController extends Controller
                     'platform_id'             => data_get($page, 'id'),
                     'name'                    => data_get($page, 'name'),
                     'username'                => data_get($page, 'username'),
-                    'picture'                 => data_get($page, 'picture.data.url'),
+                    'picture'                 => self::downloadImageToStorage(data_get($page, 'picture.data.url')),
 
                     'access_token'           => data_get($page, 'access_token'),
                     'access_token_expire_at' => config('social-media.facebook.access_token_expire_at', now()->addDay()),
@@ -141,12 +155,13 @@ class FacebookController extends Controller
                     'refresh_token'           => data_get($page, 'access_token'),
                     'refresh_token_expire_at' => config('social-media.facebook.access_token_expire_at', now()->addDay()),
                 ],
-                'connected_at' => now(),
-                'expires_at'   => config('social-media.facebook.access_token_expire_at', now()->addDay()),
+                'connected_at'    => now(),
+                'expires_at'      => config('social-media.facebook.access_token_expire_at', now()->addDay()),
+                'followers_count' => $followersCount,
             ]);
         }
 
-        return redirect()->route('dashboard.user.social-media.platforms')
+        return redirect()->route($this->getBackCacheRoute())
             ->with([
                 'type'    => 'success',
                 'message' => trans('Facebook account connected successfully.'),

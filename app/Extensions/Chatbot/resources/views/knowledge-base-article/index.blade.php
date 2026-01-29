@@ -3,7 +3,6 @@
 @section('titlebar_subtitle', $description)
 @section('titlebar_actions')
     <x-button
-        class="mb-4"
         variant="primary"
         href="{{ route('dashboard.chatbot.knowledge-base-article.create') }}"
     >

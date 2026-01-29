@@ -6,6 +6,7 @@
 			$items = [
 				'openai' => trans('DALL-E'),
 				'gpt-image-1' => trans('GPT Image 1'),
+				'gpt-image-1-5' => trans('GPT Image 1.5'),
 				'stable_diffusion' => trans('Stable Diffusion'),
 				'midjourney' => trans('Midjourney'),
 				'flux-pro' => trans('Flux-pro'),

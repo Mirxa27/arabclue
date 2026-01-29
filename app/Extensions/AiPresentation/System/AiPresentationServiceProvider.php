@@ -47,7 +47,7 @@ class AiPresentationServiceProvider extends ServiceProvider implements Extension
     {
         $this->publishes([
             //            __DIR__ . '/../resources/assets/js' => public_path('vendor/ai-presentation/js'),
-            //            __DIR__ . '/../resources/assets/images' => public_path('vendor/ai-presentation/images'),
+            __DIR__ . '/../resources/assets' => public_path('vendor/ai-presentation'),
         ], 'extension');
 
         return $this;

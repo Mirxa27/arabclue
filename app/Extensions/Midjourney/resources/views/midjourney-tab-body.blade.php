@@ -14,7 +14,7 @@
 >
 
     <form
-        class="lqd-image-generator-dalle-form flex flex-col items-start gap-4"
+        class="lqd-image-generator-midjourney-form flex flex-col items-start gap-4"
         id="openai_generator_form"
         onsubmit="return sendMidjourneyGeneratorForm();"
         x-data="{ advancedSettingsShow: false }"

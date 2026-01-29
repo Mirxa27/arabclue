@@ -1,12 +1,12 @@
 @php
     $events = $items->map(function ($item) {
-        $image = 'vendor/social-media/icons/' . $item->social_media_platform->value . '.svg';
-        $image_dark = 'vendor/social-media/icons/' . $item->social_media_platform->value . '-light.svg';
+        $image = 'vendor/social-media/icons/' . $item->social_media_platform?->value . '.svg';
+        $image_dark = 'vendor/social-media/icons/' . $item->social_media_platform?->value . '-light.svg';
 
         return [
-            'title' => $item->social_media_platform->value,
+            'title' => $item->social_media_platform?->value,
             'date' => $item->scheduled_at->format('Y-m-d'),
-            'classNames' => 'lqd-event-' . $item->social_media_platform->value,
+            'classNames' => 'lqd-event-' . $item->social_media_platform?->value,
             'extendedProps' => [
                 'scheduled_at' => $item->scheduled_at->format('g:i a'),
                 'content' => $item->content,
@@ -29,17 +29,12 @@
 
 @section('content')
     <div class="py-10">
-        {{-- @dump($items) --}}
         <div id="calendar"></div>
     </div>
 @endsection
 
 @push('script')
-    <link
-        href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css"
-        rel="stylesheet"
-    />
-    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+    <script src="{{ custom_theme_url('/assets/libs/fullcalendar/index.global.min.js') }}"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {

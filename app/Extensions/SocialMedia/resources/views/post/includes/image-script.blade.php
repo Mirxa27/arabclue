@@ -26,6 +26,19 @@ const formData = new FormData();
 	formData.append("quality", "standard");
 @endif
 
+@if(setting('social_media_image_model') === 'gpt-image-1-5')
+	formData.append("post_type", "ai_image_generator");
+	formData.append("openai_id", "36");
+	formData.append("custom_template", "0");
+	formData.append("image_generator", "gpt-image-1.5");
+	formData.append("image_style", "");
+	formData.append("image_lighting", "");
+	formData.append("image_mood", "");
+	formData.append("image_number_of_images", "1");
+	formData.append("size", "256x256");
+	formData.append("quality", "standard");
+@endif
+
 @if(setting('social_media_image_model') === 'stable_diffusion')
 	formData.append("post_type", "ai_image_generator");
 	formData.append("openai_id", "36");
@@ -124,6 +137,33 @@ const formData = new FormData();
 	formData.append("image_number_of_images", "1");
 	formData.append("negative_prompt", "");
 	formData.append("model", "flux-pro-kontext");
+	formData.append("description_flux_pro", "");
+	formData.append("description_ideogram", "");
+	formData.append("stable_description", "");
+	formData.append("style_preset", "");
+	formData.append("sampler", "");
+	formData.append("clip_guidance_preset", "");
+	formData.append("openai_id", "36");
+@endif
+
+
+@if(setting('social_media_image_model') === 'flux-2-flex')
+	formData.append("image_ratio", "");
+	formData.append("image_generator", "flux-2-flex");
+	formData.append("description", "");
+	formData.append("template_description", "");
+	formData.append("prompt_description", "");
+	formData.append("post_type", "ai_image_generator");
+	formData.append("image_mood", "");
+	formData.append("image_style", "");
+	formData.append("quality", "standard");
+	formData.append("image_lighting", "");
+	formData.append("size", "1024x1024");
+	formData.append("image_resolution", "1x1");
+	formData.append("type", "text-to-image");
+	formData.append("image_number_of_images", "1");
+	formData.append("negative_prompt", "");
+	formData.append("model", "flux-2-flex");
 	formData.append("description_flux_pro", "");
 	formData.append("description_ideogram", "");
 	formData.append("stable_description", "");

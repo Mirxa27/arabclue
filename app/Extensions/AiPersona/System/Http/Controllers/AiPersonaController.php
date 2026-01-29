@@ -48,9 +48,11 @@ class AiPersonaController extends Controller
             $listAvatars = cache()->remember('cache_list_avatars', 36000, function () {
                 return $this->service->listAvatars()['data']['avatars'] ?? [];
             });
+
             $listVoices = cache()->remember('cache_list_voices', 36000, function () {
-                return $this->service->listVoices()['data']['avatars'] ?? [];
+                return $this->service->listVoices()['data']['voices'] ?? [];
             });
+
         } else {
             $listAvatars = $this->service->listAvatars()['data']['avatars'] ?? [];
             $listVoices = $this->service->listVoices()['data']['voices'] ?? [];

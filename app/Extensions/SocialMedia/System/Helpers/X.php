@@ -103,10 +103,10 @@ class X
         ])->post($apiUrl);
     }
 
-    public function getUserInfo(): Response
+    public function getUserInfo(array $fields = ['name', 'profile_image_url', 'username', 'public_metrics']): Response
     {
         $apiUrl = $this->apiUrl('users/me', [
-            'user.fields' => 'name,profile_image_url,username',
+            'user.fields' => collect($fields)->join(','),
         ]);
 
         return Http::withToken($this->accessToken)->get($apiUrl);

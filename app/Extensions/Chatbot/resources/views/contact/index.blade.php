@@ -96,6 +96,7 @@
             </x-slot:body>
         </x-table>
     </div>
+	{{ $items->links() }}
 @endsection
 
 @push('script')

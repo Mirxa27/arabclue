@@ -4,6 +4,7 @@ namespace App\Extensions\SocialMedia\System\Http\Controllers\Oauth;
 
 use App\Extensions\SocialMedia\System\Enums\PlatformEnum;
 use App\Extensions\SocialMedia\System\Helpers\Linkedin;
+use App\Extensions\SocialMedia\System\Http\Controllers\Oauth\Traits\HasBackRoute;
 use App\Extensions\SocialMedia\System\Models\SocialMediaPlatform;
 use App\Helpers\Classes\Helper;
 use App\Http\Controllers\Controller;
@@ -12,9 +13,12 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\Auth;
+use Throwable;
 
 class LinkedinController extends Controller
 {
+    use HasBackRoute;
+
     public function __construct(public Linkedin $linkedin) {}
 
     private function cacheKey(): string
@@ -30,6 +34,8 @@ class LinkedinController extends Controller
                 'message' => trans('This feature is disabled in demo mode.'),
             ]);
         }
+
+        $this->setBackCacheRoute();
 
         if (setting('LINKEDIN_APP_ID') && setting('LINKEDIN_APP_SECRET')) {
             if ($request->has('platform_id') && $request->get('platform_id')) {
@@ -78,6 +84,7 @@ class LinkedinController extends Controller
         }
 
         $userData = $getAccountInfoRes->json();
+        $followersCount = $this->fetchFollowersCount($userData['sub'] ?? null);
 
         $platformId = cache($this->cacheKey());
 
@@ -103,8 +110,9 @@ class LinkedinController extends Controller
                         'refresh_token'           => $accessToken,
                         'refresh_token_expire_at' => now()->seconds($tokenExpireIn),
                     ],
-                    'connected_at' => now(),
-                    'expires_at'   => now()->seconds($tokenExpireIn),
+                    'connected_at'    => now(),
+                    'expires_at'      => now()->seconds($tokenExpireIn),
+                    'followers_count' => $followersCount,
                 ]);
             }
 
@@ -126,8 +134,9 @@ class LinkedinController extends Controller
                     'refresh_token'           => $accessToken,
                     'refresh_token_expire_at' => now()->seconds($tokenExpireIn),
                 ],
-                'connected_at' => now(),
-                'expires_at'   => now()->seconds($tokenExpireIn),
+                'connected_at'    => now(),
+                'expires_at'      => now()->seconds($tokenExpireIn),
+                'followers_count' => $followersCount,
             ]);
         }
 
@@ -136,9 +145,28 @@ class LinkedinController extends Controller
 
     public function redirectToPlatforms(string $type = 'success', string $message = 'Linkedin account connected successfully.'): RedirectResponse
     {
-        return to_route('dashboard.user.social-media.platforms')->with([
+        return to_route($this->getBackCacheRoute())->with([
             'type'    => $type,
             'message' => trans($message),
         ]);
+    }
+
+    private function fetchFollowersCount(?string $memberId): int
+    {
+        if (! $memberId) {
+            return 0;
+        }
+
+        try {
+            $response = $this->linkedin->getNetworkSize($memberId);
+        } catch (Throwable $exception) {
+            return 0;
+        }
+
+        if ($response->failed()) {
+            return 0;
+        }
+
+        return (int) ($response->json('firstDegreeSize') ?? $response->json('value') ?? 0);
     }
 }

@@ -34,6 +34,10 @@ class AiMusicProController extends Controller
 
     public function generate(Request $request): JsonResponse
     {
+        set_time_limit(0);
+        ini_set('memory_limit', '-1');
+        ini_set('max_execution_time', 36000);
+
         $request->validate([
             'workbook_title'  => 'required|string|max:190',
             'ai_music_prompt' => 'required|string|max:2000',

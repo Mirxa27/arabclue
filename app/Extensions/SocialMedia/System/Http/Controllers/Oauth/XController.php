@@ -4,6 +4,7 @@ namespace App\Extensions\SocialMedia\System\Http\Controllers\Oauth;
 
 use App\Extensions\SocialMedia\System\Enums\PlatformEnum;
 use App\Extensions\SocialMedia\System\Helpers\X;
+use App\Extensions\SocialMedia\System\Http\Controllers\Oauth\Traits\HasBackRoute;
 use App\Extensions\SocialMedia\System\Models\SocialMediaPlatform;
 use App\Helpers\Classes\Helper;
 use App\Http\Controllers\Controller;
@@ -13,6 +14,8 @@ use Illuminate\Support\Facades\Auth;
 
 class XController extends Controller
 {
+    use HasBackRoute;
+
     public function __construct(public X $x) {}
 
     private function cacheKey(): string
@@ -28,6 +31,8 @@ class XController extends Controller
                 'message' => trans('This feature is disabled in demo mode.'),
             ]);
         }
+
+        $this->setBackCacheRoute();
 
         if (setting('X_CLIENT_ID') && setting('X_CLIENT_SECRET')) {
             if ($request->has('platform_id') && $request->get('platform_id')) {
@@ -50,7 +55,7 @@ class XController extends Controller
         $code = $request->get('code');
 
         if (! $code) {
-            return to_route('dashboard.user.social-media.platforms')->with([
+            return to_route($this->getBackCacheRoute())->with([
                 'type'    => 'error',
                 'message' => 'Something went wrong, please try again.',
             ]);
@@ -60,7 +65,7 @@ class XController extends Controller
 
         $this->setPlatformInfo($response->json());
 
-        return to_route('dashboard.user.social-media.platforms')->with([
+        return to_route($this->getBackCacheRoute())->with([
             'type'    => 'success',
             'message' => 'X account connected successfully.',
         ]);
@@ -77,6 +82,7 @@ class XController extends Controller
         $response = $this->x->getUserInfo()->throw();
 
         $userData = $response->json('data');
+        $followersCount = (int) data_get($userData, 'public_metrics.followers_count', 0);
 
         if ($platformId && is_numeric($platformId)) {
 
@@ -99,8 +105,9 @@ class XController extends Controller
                         'refresh_token_expire_at' => now()->addHours(2),
                         'type'                    => 'user',
                     ],
-                    'connected_at' => now(),
-                    'expires_at'   => now()->addHours(2),
+                    'connected_at'    => now(),
+                    'expires_at'      => now()->addHours(2),
+                    'followers_count' => $followersCount,
                 ]);
             }
 
@@ -121,8 +128,9 @@ class XController extends Controller
                     'refresh_token_expire_at' => now()->addHours(2),
                     'type'                    => 'user',
                 ],
-                'connected_at' => now(),
-                'expires_at'   => now()->addHours(2),
+                'connected_at'    => now(),
+                'expires_at'      => now()->addHours(2),
+                'followers_count' => $followersCount,
             ]);
         }
     }

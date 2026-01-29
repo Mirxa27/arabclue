@@ -65,7 +65,7 @@
         </div>
         <div class="lqd-progress relative h-1.5 w-full bg-foreground/10">
             <div
-                class="lqd-progress-bar absolute inset-0 rounded-full bg-gradient-to-br from-[#82E2F4] to-[#8A8AED]"
+                class="lqd-progress-bar absolute inset-0 rounded-full bg-gradient-to-br from-gradient-from to-gradient-to"
                 style="width: {{ ($step / 6) * 100 }}%"
             ></div>
         </div>

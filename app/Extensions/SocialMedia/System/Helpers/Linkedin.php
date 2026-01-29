@@ -327,6 +327,17 @@ class Linkedin
         return $this->apiClient()->get($this->apiUrl("rest/videos/{$urn}"));
     }
 
+    public function getNetworkSize(string $memberId, string $edgeType = 'Connections'): \Illuminate\Http\Client\Response
+    {
+        $urn = str_starts_with($memberId, 'urn:') ? $memberId : "urn:li:person:{$memberId}";
+        $encodedUrn = urlencode($urn);
+        $apiUrl = $this->apiUrl("rest/networkSizes/{$encodedUrn}", [
+            'edgeType' => $edgeType,
+        ]);
+
+        return $this->apiClient()->get($apiUrl);
+    }
+
     private function apiClient(): PendingRequest
     {
         return Http::withHeaders([

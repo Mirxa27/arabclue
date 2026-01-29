@@ -141,16 +141,30 @@
 			<hr class="border-foreground/10 mt-6" />
 
 			<div class="flex pt-3">
-				<x-button
-					class="py-2.5 w-full"
-					id="generate_ai_music_button"
-					tag="button"
-					type="submit"
-					size="lg"
-				>
-					<x-tabler-plus class="size-5" />
-					{{ __('Generate') }}
-				</x-button>
+				@if($app_is_demo)
+					<x-button
+						class="py-2.5 w-full"
+						id="generate_ai_music_button"
+						tag="button"
+						type="button"
+						onclick="return toastr.info('This feature is disabled in Demo version.')"
+						size="lg"
+					>
+						<x-tabler-plus class="size-5" />
+						{{ __('Generate') }}
+					</x-button>
+				@else
+					<x-button
+						class="py-2.5 w-full"
+						id="generate_ai_music_button"
+						tag="button"
+						type="submit"
+						size="lg"
+					>
+						<x-tabler-plus class="size-5" />
+						{{ __('Generate') }}
+					</x-button>
+				@endif
 			</div>
 		</form>
 	</x-card>

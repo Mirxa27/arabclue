@@ -131,7 +131,7 @@
                 class="col-start-1 col-end-1 row-start-1 row-end-1 inline-block"
                 x-show="loadingState === 'loaded'"
                 x-transition.opacity
-                x-html='lqdFormatString("{{ $post['content'] }}")'
+                x-html='lqdFormatString(@json($post['content']))'
             >
                 {{ $post['content'] }}
             </span>
@@ -273,8 +273,8 @@
                                         class="w-full rounded"
                                         src="{{ $post['image'] }}"
                                         alt="{{ __('Social Media Post Image') }}"
-										loading="lazy"
-										decoding="async"
+                                        loading="lazy"
+                                        decoding="async"
                                     >
                                 @endif
                             @endif

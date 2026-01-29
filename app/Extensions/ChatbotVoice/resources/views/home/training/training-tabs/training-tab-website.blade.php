@@ -28,9 +28,7 @@
                     name="single"
                     checked
                 >
-                <span
-                    class="inline-block opacity-25 peer-checked:underline peer-checked:underline-offset-2 peer-checked:opacity-100"
-                >
+                <span class="inline-block opacity-25 peer-checked:underline peer-checked:underline-offset-2 peer-checked:opacity-100">
                     @lang('Website')
                 </span>
             </label>
@@ -45,9 +43,7 @@
                     type="radio"
                     name="single"
                 >
-                <span
-                    class="inline-block opacity-25 peer-checked:underline peer-checked:underline-offset-2 peer-checked:opacity-100"
-                >
+                <span class="inline-block opacity-25 peer-checked:underline peer-checked:underline-offset-2 peer-checked:opacity-100">
                     @lang('Single URL')
                 </span>
             </label>
@@ -61,7 +57,7 @@
                 placeholder="https://example.com"
             />
             <x-button
-                class="group absolute end-2 top-1/2 size-11 -translate-y-1/2 text-primary hover:-translate-y-1/2 hover:rotate-45 hover:scale-110 focus-visible:-translate-y-1/2 focus-visible:rotate-45 focus-visible:scale-110"
+                class="group absolute end-2 top-1/2 size-11 -translate-y-1/2 text-primary hover:!-translate-y-1/2 hover:rotate-45 hover:scale-110 focus-visible:-translate-y-1/2 focus-visible:rotate-45 focus-visible:scale-110"
                 variant="link"
                 size="none"
                 type="submit"

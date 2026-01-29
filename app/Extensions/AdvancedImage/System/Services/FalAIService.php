@@ -52,6 +52,7 @@ class FalAIService
         try {
             $response = self::generateImage(
                 prompt: 'Turn this sketch into a photorealistic image. Prompt: ' . $this->request->get('description'),
+                entity: $this->resolveEntity(),
                 images: self::createImageUrls([
                     $this->request->file('sketch_file'),
                 ])
@@ -72,6 +73,7 @@ class FalAIService
         try {
             $response = self::generateImage(
                 prompt: 'Remove the background, keeping only the main subject. Transparent.',
+                entity: $this->resolveEntity(),
                 images: self::createImageUrls([
                     $this->request->file('uploaded_image'),
                 ])
@@ -92,6 +94,7 @@ class FalAIService
         try {
             $response = self::generateImage(
                 prompt: 'Clean up the masked area to remove imperfections or unwanted elements. Preserve the other areas.',
+                entity: $this->resolveEntity(),
                 images: self::createImageUrls([
                     $this->request->file('uploaded_image'),
                     $this->request->file('mask_file'),
@@ -113,6 +116,7 @@ class FalAIService
         try {
             $response = self::generateImage(
                 prompt: 'Remove all visible text while preserving the image content.',
+                entity: $this->resolveEntity(),
                 images: self::createImageUrls([
                     $this->request->file('uploaded_image'),
                 ])
@@ -133,6 +137,7 @@ class FalAIService
         try {
             $response = self::generateImage(
                 prompt: $this->request->get('description') . ' Blend naturally with the rest of the image.',
+                entity: $this->resolveEntity(),
                 images: self::createImageUrls([
                     $this->request->file('uploaded_image'),
                 ])
@@ -153,6 +158,7 @@ class FalAIService
         try {
             $response = self::generateImage(
                 prompt: 'Replace the background with: ' . $this->request->get('description'),
+                entity: $this->resolveEntity(),
                 images: self::createImageUrls([
                     $this->request->file('uploaded_image'),
                 ])
@@ -173,6 +179,7 @@ class FalAIService
         try {
             $response = self::generateImage(
                 prompt: 'Reimagine this image as: ' . $this->request->get('description'),
+                entity: $this->resolveEntity(),
                 images: self::createImageUrls([
                     $this->request->file('uploaded_image'),
                 ])
@@ -198,7 +205,7 @@ class FalAIService
         try {
             $response = self::generateImage(
                 prompt: 'Apply the general visual style of: [image 1] to [image 2].' . $this->request->get('description'),
-                entity: EntityEnum::FLUX_PRO_KONTEXT_MAX_MULTI,
+                entity: $this->resolveEntity(),
                 images: self::createImageUrls([
                     $this->request->file('uploaded_image'),
                     $this->request->file('reference_image'),
@@ -225,7 +232,7 @@ class FalAIService
         try {
             $response = self::generateImage(
                 prompt: 'Adjust image lighting to: [image 1] to [image 2]. Prompt: ' . $this->request->get('description') . ' style: ' . $this->request->get('style'),
-                entity: EntityEnum::FLUX_PRO_KONTEXT_MAX_MULTI,
+                entity: $this->resolveEntity(),
                 images: self::createImageUrls([
                     $this->request->file('uploaded_image'),
                     $this->request->file('image_relight'),
@@ -289,5 +296,20 @@ class FalAIService
         $this->request = $request;
 
         return $this;
+    }
+
+    private function resolveEntity(): EntityEnum
+    {
+        $model = $this->request->get('ai_model') ?? EntityEnum::FLUX_PRO_KONTEXT->value;
+
+        if ($model === EntityEnum::FLUX_PRO_KONTEXT->value && in_array($this->tool, ['cleanup', 'image_relight', 'style_transfer'], true)) {
+            return EntityEnum::FLUX_PRO_KONTEXT_MAX_MULTI;
+        }
+
+        try {
+            return EntityEnum::fromSlug($model);
+        } catch (Exception) {
+            return EntityEnum::FLUX_PRO_KONTEXT;
+        }
     }
 }

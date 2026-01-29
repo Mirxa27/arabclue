@@ -100,7 +100,8 @@ class AIChatProController extends Controller
 
             switch ($defaultScreen) {
                 case 'pinned':
-                    $list = $query->orderBy('is_pinned', 'desc')
+                    $list = $query
+                        ->orderBy('is_pinned', 'desc')
                         ->orderBy('updated_at', 'desc')
                         ->get();
 
@@ -111,7 +112,8 @@ class AIChatProController extends Controller
 
                 case 'new':
                     $chat = $this->startNewChat($category);
-                    $list = $query->orderBy('is_pinned', 'desc')
+                    $list = $query
+                        ->orderBy('is_pinned', 'desc')
                         ->orderBy('updated_at', 'desc')
                         ->get();
 
@@ -119,7 +121,9 @@ class AIChatProController extends Controller
 
                 case 'last':
                 default:
-                    $list = $query->orderBy('updated_at', 'desc')->get();
+
+                    $list = $query
+                        ->orderBy('updated_at', 'desc')->get();
                     $chat = $list->first();
 
                     break;
@@ -200,6 +204,8 @@ class AIChatProController extends Controller
         $myCreatedTeam = $request->user()?->getAttribute('myCreatedTeam');
 
         return UserOpenaiChat::query()
+            ->whereNull('social_media_analysis_id')
+            ->whereNull('chat_type')
             ->where(function (Builder $query) use ($team, $myCreatedTeam) {
                 $query->where('user_id', auth()?->id())
                     ->when($team || $myCreatedTeam, function ($query) use ($team, $myCreatedTeam) {

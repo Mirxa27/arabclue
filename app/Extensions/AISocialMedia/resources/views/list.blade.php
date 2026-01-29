@@ -120,7 +120,7 @@
                                 </x-button>
                             @else
                                 <x-button
-                                    class="size-9 edit-button"
+                                    class="edit-button size-9"
                                     data-id="{{ $entry->id }}"
                                     data-platform="{{ $entry->platform }}"
                                     data-period="{{ $entry->repeat_period }}"
@@ -136,7 +136,7 @@
                                     <x-tabler-pencil class="size-4" />
                                 </x-button>
                                 <x-button
-                                    class="size-9 delete-button"
+                                    class="delete-button size-9"
                                     variant="ghost-shadow"
                                     hover-variant="danger"
                                     size="none"

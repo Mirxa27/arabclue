@@ -15,6 +15,7 @@ class ChatbotCustomerController extends Controller
         return view('chatbot::contact.index', [
             'items' => ChatbotCustomer::query()
                 ->where('user_id', auth()->id())
+                ->orderBy('id', 'desc')
                 ->paginate(20),
             'title'       => __('Contacts'),
             'description' => __('Manage your chatbot contacts and view their interaction history.'),

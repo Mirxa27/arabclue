@@ -18,7 +18,7 @@
         {{-- Mobile nav toggle and logo --}}
         <div class="mobile-nav-logo flex items-center gap-3 lg:hidden">
             <button
-                class="lqd-mobile-nav-toggle size-10 flex items-center justify-center"
+                class="lqd-mobile-nav-toggle flex size-10 items-center justify-center"
                 type="button"
                 x-init
                 @click.prevent="$store.mobileNav.toggleNav()"
@@ -41,8 +41,8 @@
         @includeFirst(['focus-mode::header', 'components.includes.ai-tools', 'vendor.empty'])
 
         {{-- Search form --}}
-        <div class="header-search-container flex items-center peer-[&.header-title-container]/title:grow peer-[&.header-title-container]/title:justify-center">
-            <x-header-search />
+        <div class="header-search-container hidden items-center peer-[&.header-title-container]/title:grow peer-[&.header-title-container]/title:justify-center lg:flex">
+            <x-header-search class:input="ps-10 bg-surface" />
         </div>
 
         <div class="header-actions-container flex grow justify-end gap-4 max-lg:basis-2/3 max-lg:gap-2">
@@ -128,7 +128,7 @@
                                         class="flex items-center gap-2 border-b px-3 py-2 text-heading-foreground transition-colors last:border-b-0 hover:bg-foreground/5 hover:no-underline"
                                         rel="alternate"
                                         hreflang="{{ $localeCode }}"
-                                        href="?app_locale={{ $localeCode  }}"
+                                        href="?app_locale={{ $localeCode }}"
                                     >
                                         <span class="text-xl">
                                             {{ country2flag(substr($properties['regional'], strrpos($properties['regional'], '_') + 1)) }}
@@ -151,7 +151,7 @@
                         class="size-9 p-0"
                     >
                         <span
-                            class="size-full inline-block rounded-full bg-cover"
+                            class="inline-block size-full rounded-full bg-cover"
                             style="background-image: url({{ custom_theme_url($user_avatar) }})"
                         ></span>
                     </x-slot:trigger>

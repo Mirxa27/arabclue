@@ -16,6 +16,7 @@ class ChatbotService
     public function agentConversations(array $chatbots, ?string $orderBy = null): Collection|array
     {
         $agentFilter = filter_var(request()->get('agentFilter', false), FILTER_VALIDATE_BOOLEAN);
+        $selectedChatbotId = $this->selectedChatbotId();
 
         return ChatbotConversation::query()
             ->where('is_showed_on_history', true)
@@ -25,6 +26,9 @@ class ChatbotService
                 $query->whereNull('connect_agent_at');
             }, function (Builder $query) {
                 $query->whereNotNull('connect_agent_at');
+            })
+            ->when($selectedChatbotId, function (Builder $query) use ($selectedChatbotId) {
+                $query->where('chatbot_id', $selectedChatbotId);
             })
             ->whereIn('chatbot_id', $chatbots)
             ->orderBy('pinned', 'desc')
@@ -87,6 +91,7 @@ class ChatbotService
         ?string $orderBy = null,
     ): Builder|\Illuminate\Support\HigherOrderWhenProxy {
         $filterAgent = request('agentFilter');
+        $selectedChatbotId = $this->selectedChatbotId();
 
         return ChatbotConversation::query()
             ->when(request('chatbot_channel') && request('chatbot_channel') !== 'all', function (Builder $query) {
@@ -95,6 +100,9 @@ class ChatbotService
             ->where('is_showed_on_history', true)
             ->with('chatbot:id,uuid,avatar,title')
             ->with(['histories.user:id,avatar', 'lastMessage'])
+            ->when($selectedChatbotId, function (Builder $query) use ($selectedChatbotId) {
+                $query->where('chatbot_id', $selectedChatbotId);
+            })
             ->when($filterAgent === 'ai', function (Builder $query) {
                 $query->whereNotNull('connect_agent_at');
             })
@@ -116,6 +124,10 @@ class ChatbotService
 
         $sort = request('sort', 'desc');
 
+        $startDate = request('start_date');
+
+        $endDate = request('end_date');
+
         return $this->agentConversationsWithQuery($chatbots, $orderBy)
             ->when($ticketStatus !== 'all' && in_array($ticketStatus, ['new', 'closed']), function (Builder $query) use ($ticketStatus) {
                 $query->where('ticket_status', $ticketStatus);
@@ -125,6 +137,14 @@ class ChatbotService
                 $query->whereHas('histories', function (Builder $query) {
                     $query->where('role', 'user')
                         ->whereNull('read_at');
+                });
+            })
+            ->when($startDate && $endDate, function (Builder $query) use ($startDate, $endDate) {
+                $query->whereHas('histories', function (Builder $query) use ($startDate, $endDate) {
+                    $query->whereBetween('created_at', [
+                        $startDate . ' 00:00:00',
+                        $endDate . ' 23:59:59',
+                    ]);
                 });
             })
             ->when($sort === 'newest', function (Builder $query) {
@@ -158,10 +178,15 @@ class ChatbotService
 
     public function agentConversationsBySearch(array $chatbots, string $search)
     {
+        $selectedChatbotId = $this->selectedChatbotId();
+
         return ChatbotConversation::query()
             ->with('chatbot:id,uuid,avatar,title')
             ->with(['histories.user:id,avatar', 'lastMessage'])
             ->whereNotNull('connect_agent_at')
+            ->when($selectedChatbotId, function (Builder $query) use ($selectedChatbotId) {
+                $query->where('chatbot_id', $selectedChatbotId);
+            })
             ->whereIn('chatbot_id', $chatbots)
             ->whereHas('histories', function (Builder $query) use ($search) {
                 $query->where('message', 'like', "%$search%");
@@ -172,10 +197,15 @@ class ChatbotService
 
     public function conversations(array $chatbots, ?string $orderBy = null): Collection|array
     {
+        $selectedChatbotId = $this->selectedChatbotId();
+
         return ChatbotConversation::query()
             ->where('is_showed_on_history', true)
             ->with('chatbot:id,uuid,avatar,title')
             ->with(['histories', 'lastMessage'])
+            ->when($selectedChatbotId, function (Builder $query) use ($selectedChatbotId) {
+                $query->where('chatbot_id', $selectedChatbotId);
+            })
             ->whereIn('chatbot_id', $chatbots)
             ->when($orderBy, function (Builder $query) use ($orderBy) {
                 $query->orderBy($orderBy ?: 'id', 'desc');
@@ -186,6 +216,7 @@ class ChatbotService
     public function conversationsWithPaginate(array $chatbots, ?string $orderBy = null): LengthAwarePaginator
     {
         $filterAgent = request('agentFilter');
+        $selectedChatbotId = $this->selectedChatbotId();
 
         return ChatbotConversation::query()
             ->when(
@@ -197,6 +228,9 @@ class ChatbotService
             ->where('is_showed_on_history', true)
             ->with('chatbot:id,uuid,avatar,title')
             ->with(['histories', 'lastMessage'])
+            ->when($selectedChatbotId, function (Builder $query) use ($selectedChatbotId) {
+                $query->where('chatbot_id', $selectedChatbotId);
+            })
             ->when($filterAgent === 'ai', function (Builder $query) {
                 $query->whereNotNull('connect_agent_at');
             })
@@ -240,6 +274,17 @@ class ChatbotService
                 return $query->where('user_id', Auth::id())->orWhereNull('user_id');
             })
             ->get();
+    }
+
+    private function selectedChatbotId(): ?int
+    {
+        $chatbotId = request('chatbot_id');
+
+        if (! $chatbotId || $chatbotId === 'all' || ! is_numeric($chatbotId)) {
+            return null;
+        }
+
+        return (int) $chatbotId;
     }
 
     public function query(): \Illuminate\Database\Eloquent\Builder

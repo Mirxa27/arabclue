@@ -3,7 +3,8 @@
 	$flux = null;
 
 	$isFalAIEnabled = \App\Helpers\Classes\ApiHelper::setFalAIKey();
-	$isIdeogramAvailable = class_exists('App\Extensions\Ideogram\System\IdeogramServiceProvider');
+
+	$isIdeogramAvailable = \App\Helpers\Classes\MarketplaceHelper::isRegistered('ideogram');
 
 	if (setting('dalle_hidden', 0) == '1') {
 		$generators[] = ['value' => 'openai', 'label' => __('DALL-E')];
@@ -22,7 +23,7 @@
 		$flux = 'flux-pro';
 	}
 
-	if ($isFalAIEnabled && $isIdeogramAvailable) {
+	if ($isFalAIEnabled && \App\Helpers\Classes\MarketplaceHelper::isRegistered('ideogram')) {
 		$generators[] = ['value' => 'ideogram', 'label' => 'Ideogram'];
 	}
 
@@ -30,16 +31,23 @@
 		$generators[] = ['value' => 'gpt-image-1', 'label' => __('GPT image 1')];
 	}
 
-	if (setting('enabled_flux_pro_kontext', 1) == '1') {
-		$generators[] = ['value' => 'flux-pro-kontext', 'label' => __('Flux Pro Kontext')];
+	if (setting('enabled_gpt_image_1_5', 0) == '1') {
+		$generators[] = ['value' => 'gpt-image-1-5', 'label' => __('GPT image 1.5')];
 	}
 
-	if (\App\Helpers\Classes\MarketplaceHelper::isRegistered('nano-banana')) {
+	if ($isFalAIEnabled && setting('enabled_flux_pro_kontext', 1) == '1') {
+		$generators[] = ['value' => 'flux-pro-kontext', 'label' => __('Flux Pro Kontext')];
+	}
+	if ($isFalAIEnabled && setting('enabled_flux_2_flex', 1) == '1') {
+		$generators[] = ['value' => 'flux-2-flex', 'label' => __('Flux 2 Flex')];
+	}
+
+	if ($isFalAIEnabled && \App\Helpers\Classes\MarketplaceHelper::isRegistered('nano-banana')) {
 		$generators[] = ['value' => 'nano-banana', 'label' => __('Nano Banana')];
 		$generators[] = ['value' => 'nano-banana-pro', 'label' => __('Nano Banana Pro')];
 	}
 
-	if (\App\Helpers\Classes\MarketplaceHelper::isRegistered('see-dream-v4')) {
+	if ($isFalAIEnabled && \App\Helpers\Classes\MarketplaceHelper::isRegistered('see-dream-v4')) {
 		$generators[] = ['value' => 'seedream/v4/text-to-image', 'label' => __('SeeDream V4')];
 	}
 @endphp

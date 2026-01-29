@@ -29,7 +29,7 @@ class AdvancedImageStatusController extends Controller
             $task = match (data_get($task->payload, 'model')) {
                 'freepik'          => $this->freepikService->checkStatus($task),
                 'novita'           => $this->novitaService->checkStatus($task),
-                'flux-pro/kontext' => $this->falaiService->checkStatus($task),
+                'flux-pro/kontext', 'flux-2-flex', 'flux-2-flex/edit' => $this->falaiService->checkStatus($task),
                 'nano-banana/edit', 'nano-banana-pro/edit' => $this->nanoBananaService->checkStatus($task),
                 default            => $task,
             };

@@ -171,6 +171,21 @@
                                 {{ __('GPT-IMAGE-1') }}
                             </x-button>
                         @endif
+						@if (setting('enabled_gpt_image_1_5', '0') != '0')
+							<x-button
+								class="lqd-image-generator-tabs-trigger"
+								data-generator-name="gpt-image-1.5"
+								tag="button"
+								type="button"
+								variant="ghost"
+								x-data="{}"
+								::class="{ 'active': activeGenerator === 'gpt_image_1_5' }"
+								x-bind:data-active="activeGenerator === 'gpt_image_1_5'"
+								@click="changeActiveGenerator('gpt_image_1_5')"
+							>
+								{{ __('GPT-IMAGE-1.5') }}
+							</x-button>
+						@endif
                         @if (setting('stable_hidden', 0) != 1)
                             <x-button
                                 class="lqd-image-generator-tabs-trigger"
@@ -192,6 +207,7 @@
 
                         @if (\App\Helpers\Classes\ApiHelper::setFalAIKey())
                             @includeFirst(['flux-pro::flux-pro-tab', 'panel.user.openai.includes.flux-pro-tab', 'vendor.empty'])
+                            @includeFirst(['flux-pro::flux-2-flex-tab', 'panel.user.openai.includes.flux-2-flex-tab', 'vendor.empty'])
                             @includeFirst(['ideogram::ideogram-tab', 'panel.user.openai.includes.ideogram-tab', 'vendor.empty'])
                             @includeIf('nano-banana::nano-banana-tab')
                             @includeIf('see-dream-v4::see-dream-v4-tab')
@@ -373,6 +389,96 @@
                         </form>
                     </div>
                 @endif
+
+				@if (setting('enabled_gpt_image_1_5', '0') != '0')
+					<div
+						class="lqd-image-generator-tabs-content lqd-image-generator-gpt-image-1 hidden"
+						x-data="{}"
+						:class="{ 'hidden': activeGenerator !== 'gpt_image_1_5' }"
+					>
+						<form
+							class="lqd-image-generator-dalle-form flex flex-col items-start gap-4"
+							id="openai_generator_form"
+							onsubmit="return sendOpenaiGeneratorForm();"
+							x-data="{ advancedSettingsShow: false }"
+						>
+							<h3
+								class="mb-0 flex w-full flex-wrap items-center gap-2"
+								:class="{ 'hidden': activeGenerator === 'stable_diffusion' }"
+							>
+								{{ __('Explain your idea') }}. |
+								<button
+									class="lqd-image-generator-random-prompt-trigger cursor-pointer text-green-600 hover:underline"
+									type="button"
+									x-data="{}"
+									@click="prompt = generateRandomPrompt()"
+								>
+									{{ __('Generate example prompt') }}
+								</button>
+
+								@if (setting('user_ai_image_prompt_library') === null || setting('user_ai_image_prompt_library'))
+									<button
+										class="lqd-generator-templates-trigger flex size-10 shrink-0 cursor-pointer items-center justify-center gap-2 rounded-full text-heading-foreground transition-all max-md:h-auto max-md:w-auto max-md:bg-transparent md:hover:bg-heading-background md:hover:text-heading-foreground"
+										type="button"
+										@click.prevent="togglePromptLibraryShow()"
+									>
+										<x-tabler-article
+											class="size-6"
+											stroke-width="1.5"
+										/>
+										<span class="md:hidden">{{ __('Browse prompt library') }}</span>
+									</button>
+								@endif
+							</h3>
+
+							<div class="lqd-image-generator-inputs-wrap relative w-full">
+								@foreach (json_decode($openai->questions, false, 512, JSON_THROW_ON_ERROR) ?? [] as $question)
+									@if ($question->type === 'textarea')
+										<x-forms.input
+											class="lqd-image-generator-prompt h-14 resize-none overflow-hidden rounded-full bg-background px-6 py-4 text-heading-foreground shadow-sm placeholder:text-foreground/50 max-md:min-h-32 max-md:rounded-md"
+											id="gpt_1_5_{{ $question->name }}"
+											type="textarea"
+											name="gpt_1_5_{{ $question->name }}"
+											x-data="{}"
+											::value="prompt"
+											::placeholder="generateRandomPrompt()"
+										/>
+									@endif
+								@endforeach
+
+								<x-button
+									class="absolute end-4 top-1/2 -translate-y-1/2 hover:-translate-y-1/2 hover:scale-110 max-lg:relative max-lg:right-auto max-lg:top-auto max-lg:mt-2 max-lg:w-full max-lg:translate-y-0"
+									id="gpt_openai_generator_button"
+									tag="button"
+									type="submit"
+								>
+									{{ __('Generate') }}
+									<x-tabler-arrow-right class="size-5" />
+								</x-button>
+							</div>
+
+							<div
+								class="active flex w-full flex-wrap justify-between gap-3 max-lg:hidden lg:fixed lg:bottom-[--body-padding] lg:end-[--body-padding] lg:top-[--body-padding] lg:z-5 lg:w-[--sidebar-width] lg:flex-col lg:flex-nowrap lg:justify-start lg:gap-8 lg:overflow-y-auto lg:rounded-e-2xl lg:border-s lg:border-border lg:bg-background lg:p-7 max-lg:[&.advanced-opts-enabled]:flex lg:[&.inactive]:hidden lg:[&>div]:grow-0"
+								x-data="{}"
+								style="view-transition-name: lqd-sidebar"
+								:class="{ 'inactive': activeGenerator !== 'gpt_image_1_5', 'active': activeGenerator === 'gpt_image_1_5', 'advanced-opts-enabled': advancedSettingsShow }"
+							>
+								<h3 class="hidden border-b border-border pb-6 text-start text-lg lg:block">
+									@lang('Advanced Settings')
+								</h3>
+								@include('panel.user.openai.components.generator_image_gpt_image_1_5_options')
+								<div class="sticky -bottom-7 -mx-7 mt-auto hidden rounded-xl px-7 py-4 backdrop-blur-2xl lg:block">
+									<x-button
+										class="w-full"
+										type="submit"
+									>
+										@lang('Create')
+									</x-button>
+								</div>
+							</div>
+						</form>
+					</div>
+				@endif
 
                 <div
                     class="lqd-image-generator-tabs-content lqd-image-generator-stablediffusion hidden"
@@ -684,9 +790,10 @@
 
                 @if (\App\Helpers\Classes\ApiHelper::setFalAIKey())
                     @includeFirst(['flux-pro::flux-pro-tab-body', 'panel.user.openai.includes.flux-pro-tab-body', 'vendor.empty'])
+                    @includeFirst(['flux-pro::flux-2-flex-tab-body', 'panel.user.openai.includes.flux-2-flex-tab-body', 'vendor.empty'])
                     @includeFirst(['ideogram::ideogram-tab-body', 'panel.user.openai.includes.ideogram-tab-body', 'vendor.empty'])
-					@includeIf('nano-banana::nano-banana-tab-body')
-					@includeIf('see-dream-v4::see-dream-v4-tab-body')
+                    @includeIf('nano-banana::nano-banana-tab-body')
+                    @includeIf('see-dream-v4::see-dream-v4-tab-body')
                 @endif
 
                 <div
@@ -1279,9 +1386,9 @@
                             const delete_url = `${ server }/dashboard/user/openai/documents/delete/image/${ image.slug }`;
 
                             imageResultTemplate.setAttribute("data-id", image.id);
-                            imageResultTemplate.setAttribute("data-generator", image.response == "SD" ? "sd" : "de");
+                            imageResultTemplate.setAttribute("data-generator", image.response.substr(0, 2).toLowerCase());
                             imageResultTemplate.querySelector(".lqd-image-result-img").setAttribute("src", image.thumbnail);
-                            imageResultTemplate.querySelector(".lqd-image-result-type").innerHTML = image.response == "SD" ? "SD" : "DE";
+                            imageResultTemplate.querySelector(".lqd-image-result-type").innerHTML = image.response.substr(0, 2).toUpperCase();
                             imageResultTemplate.querySelector(".lqd-image-result-view").setAttribute("data-payload", JSON.stringify(image));
 
                             imageResultTemplate.querySelector(".lqd-image-result-delete").setAttribute("href", delete_url);
@@ -1319,7 +1426,8 @@
     </script>
     @includeIf('midjourney::midjourney-script')
     @includeFirst(['flux-pro::flux-pro-script', 'panel.user.openai.includes.flux-pro-script', 'vendor.empty'])
+    @includeFirst(['flux-pro::flux-2-flex-script', 'panel.user.openai.includes.flux-2-flex-script', 'vendor.empty'])
     @includeFirst(['ideogram::ideogram-script', 'panel.user.openai.includes.ideogram-script', 'vendor.empty'])
-	@includeIf('nano-banana::nano-banana-script')
-	@includeIf('see-dream-v4::see-dream-v4-script')
+    @includeIf('nano-banana::nano-banana-script')
+    @includeIf('see-dream-v4::see-dream-v4-script')
 @endpush

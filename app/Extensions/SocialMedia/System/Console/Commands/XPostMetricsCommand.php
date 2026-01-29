@@ -8,7 +8,6 @@ use App\Extensions\SocialMedia\System\Models\SocialMediaPlatform;
 use App\Extensions\SocialMedia\System\Models\SocialMediaPost;
 use Exception;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Log;
 
 class XPostMetricsCommand extends Command
 {
@@ -18,8 +17,6 @@ class XPostMetricsCommand extends Command
 
     public function handle(): void
     {
-        Log::info('XPostMetricsCommand started');
-
         $posts = SocialMediaPost::query()
             ->where('social_media_platform', PlatformEnum::x->value)
             ->with('platform')

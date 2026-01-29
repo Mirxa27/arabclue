@@ -350,13 +350,13 @@
                                 <input
                                     class="absolute inset-0 z-2 cursor-pointer opacity-0"
                                     id="image_src"
-                                    :name="generator === 'gpt-image-1' || generator === 'flux-pro-kontext' ? 'image_src[]' :
+                                    :name="generator === 'gpt-image-1' || generator === 'gpt-image-1-5' || generator === 'flux-pro-kontext' ? 'image_src[]' :
                                         'image_src'"
                                     type="file"
                                     accept="image/*"
                                     x-ref="formFileInput"
                                     @input="handleFileChange"
-                                    :multiple="generator === 'gpt-image-1' || generator === 'flux-pro-kontext'"
+                                    :multiple="generator === 'gpt-image-1' || generator === 'gpt-image-1-5' || generator === 'flux-pro-kontext'"
                                 >
                             </div>
                         </div>
@@ -398,7 +398,7 @@
                 pickerModalOpen: false,
                 uploadingImages: [],
                 lastUploadingImages: [],
-                supportImageModels: ['stable_diffusion', 'gpt-image-1', 'flux-pro-kontext', 'nano-banana'],
+                supportImageModels: ['stable_diffusion', 'gpt-image-1', 'gpt-image-1-5', 'flux-pro-kontext', 'nano-banana'],
 
                 handleDragOver(event) {
                     this.$refs.dropArea.classList.add('drag-over');
@@ -514,7 +514,7 @@
             const imageGenerator = $('#image_generator');
             const fileInput = $('#image_src')[0];
             const image = fileInput?.files[0];
-            const supportImageModels = ['stable_diffusion', 'gpt-image-1', 'flux-pro-kontext', 'nano-banana'];
+            const supportImageModels = ['stable_diffusion', 'gpt-image-1', 'gpt-image-1-5', 'flux-pro-kontext', 'nano-banana'];
 
             if (templateInput.val()) {
                 descriptionInput.val(`${templateInput.val()} content: ${descriptionInput.val()}`);

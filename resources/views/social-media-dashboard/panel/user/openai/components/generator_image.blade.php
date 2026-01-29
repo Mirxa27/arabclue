@@ -163,6 +163,7 @@
                 @includeFirst(['flux-pro::flux-pro-tab', 'panel.user.openai.includes.flux-pro-tab', 'vendor.empty'])
                 @includeFirst(['ideogram::ideogram-tab', 'panel.user.openai.includes.ideogram-tab', 'vendor.empty'])
 				@includeIf('nano-banana::nano-banana-tab')
+				@includeIf('nano-banana::nano-banana-pro-tab')
 				@includeIf('see-dream-v4::see-dream-v4-tab')
             @endif
         </div>

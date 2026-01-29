@@ -57,7 +57,7 @@
                 placeholder="https://example.com"
             />
             <x-button
-                class="group absolute end-2 top-1/2 size-11 -translate-y-1/2 text-primary hover:-translate-y-1/2 hover:rotate-45 hover:scale-110 focus-visible:-translate-y-1/2 focus-visible:rotate-45 focus-visible:scale-110"
+                class="group absolute end-2 top-1/2 size-11 -translate-y-1/2 text-primary hover:!-translate-y-1/2 hover:rotate-45 hover:scale-110 focus-visible:-translate-y-1/2 focus-visible:rotate-45 focus-visible:scale-110"
                 variant="none"
                 size="none"
                 type="submit"

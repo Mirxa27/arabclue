@@ -1,22 +1,23 @@
 .lqd-header {
 
 	.header-search {
-		@apply flex h-full;
+		@apply flex;
 
 		kbd {
 			@apply hidden;
 		}
+
 		.lqd-input-container {
-			@apply flex h-full;
+			@apply flex;
 
 			.lqd-input {
-				@apply h-full bg-transparent rounded-none border-none text-base focus:ring-0 focus:border-transparent;
+				@apply rounded-none border-none text-base focus:ring-0 focus:border-transparent;
 			}
 		}
 
-		> div {
+		>div {
 
-			> span:last-of-type {
+			>span:last-of-type {
 				@apply hidden;
 			}
 		}
@@ -31,11 +32,11 @@
 	@apply grow;
 }
 
-.navbar-search-results {
+.header-search-results {
 	@apply bg-white dark:bg-background;
 }
 
-.notifications-dropdown > .lqd-dropdown-trigger,
+.notifications-dropdown>.lqd-dropdown-trigger,
 .lqd-btn.lqd-focus-mode-switch,
 .lqd-btn.lqd-light-dark-switch,
 .header-language-dropdown .lqd-btn {

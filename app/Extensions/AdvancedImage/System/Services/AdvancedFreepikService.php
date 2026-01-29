@@ -324,6 +324,13 @@ class AdvancedFreepikService
 
         $error = $http->json('message');
 
+        if ($error && Str::contains($error, 'API key is invalid')) {
+            return [
+                'status'    => 'error',
+                'message'   => 'Unable to process action.',
+            ];
+        }
+
         return [
             'status'    => 'error',
             'message'   => $error ?? 'Unable to process action.',

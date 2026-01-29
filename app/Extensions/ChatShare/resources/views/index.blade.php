@@ -427,7 +427,7 @@
         href="{{ custom_theme_url('/assets/libs/prism/prism.css') }}"
     >
     <script src="{{ custom_theme_url('/assets/libs/prism/prism.js') }}"></script>
-    <script src="{{ custom_theme_url('/assets/libs/markdown-it.min.js') }}"></script>
+    <script src="{{ custom_theme_url('/assets/libs/markdownit/markdown-it.min.js') }}"></script>
     <script src="{{ custom_theme_url('/assets/libs/html2pdf/html2pdf.bundle.min.js') }}"></script>
 
     @include('panel.user.openai_chat.components.chat_js')

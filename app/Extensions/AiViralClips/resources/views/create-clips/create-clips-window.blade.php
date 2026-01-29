@@ -1,7 +1,7 @@
 <div
     @class([
         'lqd-chatbot-edit-window',
-        'fixed bottom-0 end-0 start-0 top-0 z-[100] overflow-y-auto bg-background lg:start-[--navbar-width]' => $overlay,
+        'fixed bottom-0 end-0 start-0 top-0 z-20 overflow-y-auto bg-background lg:start-[--navbar-width]' => $overlay,
     ])
     x-data="createAiClipsData"
     @if ($overlay) x-cloak @endif

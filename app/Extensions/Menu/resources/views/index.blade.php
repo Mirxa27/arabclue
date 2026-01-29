@@ -2,7 +2,7 @@
     $filters = ['User', 'Admin'];
 @endphp
 
-@extends('panel.layout.settings')
+@extends('panel.layout.settings', ['layout' => 'wide'])
 @section('title', __('Menu Management'))
 @section('titlebar_actions')
     <x-modal
@@ -113,7 +113,7 @@
                             @if ($item['type']) data-type="{{ $item['type'] }}" @endif
                         >
                             <div class="items-center gap-5 rounded-xl border bg-background px-4 py-3 transition-all hover:shadow-lg hover:shadow-black/5">
-                                <div class="flex w-full items-center gap-5">
+                                <div class="flex w-full items-center gap-3">
                                     <div class="lqd-menu-item-handle flex size-6 cursor-grab items-center justify-center">
                                         <svg
                                             width="10"
@@ -198,7 +198,7 @@
                                             >
                                         @endif
                                     </div>
-                                    @if ($item['type'] == 'item' && in_array($dash_theme, ['bolt', 'marketing-bot-dashboard', 'social-media-dashboard']))
+                                    @if ($item['type'] == 'item' && in_array($dash_theme, ['bolt', 'marketing-bot-dashboard', 'social-media-dashboard',  'social-media-agent-dashboard']))
                                         <div class="ms-auto flex items-center gap-2">
                                             <x-forms.input
                                                 class="h-4 w-8 bg-input-border [background-size:10px]"
@@ -242,7 +242,7 @@
                                         @endif
                                     </div>
                                 </div>
-                                @if ($item['type'] == 'item' && in_array($dash_theme, ['bolt', 'marketing-bot-dashboard', 'social-media-dashboard']))
+                                @if ($item['type'] == 'item' && in_array($dash_theme, ['bolt', 'marketing-bot-dashboard', 'social-media-dashboard',  'social-media-agent-dashboard']))
                                     <div
                                         class="{{ $item['bolt_menu'] ? '' : 'hidden' }} mt-2 flex flex-col gap-3 rounded border p-2"
                                         id="{{ $item['id'] . '-bolt-color' }}"
@@ -290,7 +290,7 @@
                                                 id="{{ 'menu-' . $child['id'] }}"
                                                 @if (isset($child['type']) && $child['type']) data-type="{{ $child['type'] }}" @endif
                                             >
-                                                <div class="flex items-center gap-5 rounded-xl border bg-background px-4 py-3 transition-all hover:shadow-lg hover:shadow-black/5">
+                                                <div class="flex items-center gap-3 rounded-xl border bg-background px-4 py-3 transition-all hover:shadow-lg hover:shadow-black/5">
                                                     <div class="lqd-menu-item-handle flex size-6 cursor-grab items-center justify-center">
                                                         <svg
                                                             width="10"
@@ -380,39 +380,82 @@
                                                         @endif
                                                     </div>
 
-                                                    <div class="ms-auto flex items-center gap-2 empty:hidden">
-                                                        @if (isset($child['key']) && $child['key'] != 'menu_setting')
-                                                            <x-forms.input
-                                                                class="h-4 w-8 bg-input-border [background-size:10px]"
-                                                                id="login_without_confirmation"
-                                                                data-href="{{ route('dashboard.admin.menu.status', $child['id']) }}"
-                                                                data-status="menu"
-                                                                type="checkbox"
-                                                                switcher
-                                                                type="checkbox"
-                                                                :checked="$child['is_active'] == '1'"
-                                                            />
-                                                        @endif
+													@if ($child['type'] == 'item' && in_array($dash_theme, ['bolt', 'marketing-bot-dashboard', 'social-media-dashboard', 'social-media-agent-dashboard']))
+														<div class="ms-auto flex items-center gap-2">
+															<x-forms.input
+																class="h-4 w-8 bg-input-border [background-size:10px]"
+																data-href="{{ route('dashboard.admin.menu.bolt-menu', $child['id']) }}"
+																data-status="menu"
+																data-color-div="{{ $child['id'] . '-bolt-color' }}"
+																label="Quick Menu"
+																type="checkbox"
+																switcher
+																:checked="$child['bolt_menu'] == '1'"
+															/>
+														</div>
+													@endif
+													<div class="ms-auto flex items-center gap-2 empty:hidden">
+														@if (isset($child['key']) && $child['key'] != 'menu_setting')
+															<x-forms.input
+																class="h-4 w-8 bg-input-border [background-size:10px]"
+																id="login_without_confirmation"
+																data-href="{{ route('dashboard.admin.menu.status', $child['id']) }}"
+																data-status="menu"
+																type="checkbox"
+																switcher
+																type="checkbox"
+																:checked="$child['is_active'] == '1'"
+															/>
+														@endif
 
-                                                        @if ($child['custom_menu'])
-                                                            <x-button
-                                                                class="size-6"
-                                                                data-item="delete"
-                                                                variant="ghost"
-                                                                hover-variant="danger"
-                                                                size="none"
-                                                                href="{{ route('dashboard.admin.menu.delete', $child['id']) }}"
-                                                                onclick="return confirm('{{ __('Are you sure? This is permanent.') }}')"
-                                                            >
-                                                                <x-tabler-trash class="size-5" />
-                                                            </x-button>
-                                                        @endif
-                                                    </div>
-                                                </div>
-                                            </li>
-                                        @endif
-                                    @endforeach
-                                </ol>
+														@if ($child['custom_menu'])
+															<x-button
+																class="size-6"
+																data-item="delete"
+																variant="ghost"
+																hover-variant="danger"
+																size="none"
+																href="{{ route('dashboard.admin.menu.delete', $child['id']) }}"
+																onclick="return confirm('{{ __('Are you sure? This is permanent.') }}')"
+															>
+																<x-tabler-trash class="size-5" />
+															</x-button>
+														@endif
+													</div>
+												</div>
+												@if ($child['type'] == 'item' && in_array($dash_theme, ['bolt', 'marketing-bot-dashboard', 'social-media-dashboard', 'social-media-agent-dashboard']))
+													<div
+														class="{{ $child['bolt_menu'] ? '' : 'hidden' }} mt-2 flex flex-col gap-3 rounded border p-2"
+														id="{{ $child['id'] . '-bolt-color' }}"
+													>
+														<x-forms.input
+															id="bolt_background"
+															data-link="{{ route('dashboard.admin.menu.update', [$child['id'], 'bolt_background']) }}"
+															data-item="input"
+															name="bolt_background"
+															label="{{ __('Quick menu background') }}"
+															type="color"
+															size="lg"
+															value="{{ $child['bolt_background'] }}"
+															tooltip="{{ __('Pick a color for for the icon background. Color is in HEX format.') }}"
+														/>
+														<x-forms.input
+															id="bolt_foreground"
+															data-link="{{ route('dashboard.admin.menu.update', [$child['id'], 'bolt_foreground']) }}"
+															data-item="input"
+															name="bolt_foreground"
+															label="{{ __('Quick menu foreground') }}"
+															type="color"
+															size="lg"
+															value="{{ $child['bolt_foreground'] }}"
+															tooltip="{{ __('Pick a color for for the icon foreground. Color is in HEX format.') }}"
+														/>
+													</div>
+												@endif
+											</li>
+											@endif
+									@endforeach
+								</ol>
                             @endif
                         </li>
                     @endif

@@ -64,6 +64,10 @@ class AdvancedImageController extends Controller
             return EntityEnum::NANO_BANANA_PRO_EDIT;
         }
 
+        if (request('ai_model') === 'gpt-image-1.5') {
+            return EntityEnum::GPT_IMAGE_1_5;
+        }
+
         if (request('ai_model') === 'flux-pro/kontext') {
 
             $tools = ['cleanup', 'image_relight', 'style_transfer'];
@@ -151,11 +155,12 @@ class AdvancedImageController extends Controller
         $model = $request->get('ai_model');
 
         return match ($model) {
-            'openai', 'gpt-image-1' => $this->handleOpenAI($request),
+            'openai', 'gpt-image-1', 'gpt-image-1.5' => $this->handleOpenAI($request, $model),
             'freepik'                 => $this->handleFreepik($request),
             'clipdrop'                => $this->handleClipDrop($request),
             'novita'                  => $this->handleNovita($request),
             'flux-pro/kontext'        => $this->handleFallAi($request),
+            'flux-2-flex/edit'        => $this->handleFallAi($request),
             'nano-banana/edit'        => $this->handleNanoBanana($request),
             'nano-banana-pro/edit'    => $this->handleNanoBanana($request, true),
             default                   => ['error' => true, 'message' => __('Invalid AI model.')],
@@ -194,10 +199,11 @@ class AdvancedImageController extends Controller
         ];
     }
 
-    private function handleOpenAI(Request $request): array
+    private function handleOpenAI(Request $request, $model): array
     {
         $photo = $this->openAIService
             ->setTool($request->input('selected_tool'))
+            ->setModel($model)
             ->setRequest($request)
             ->generate();
 

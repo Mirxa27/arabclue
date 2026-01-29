@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace App\Extensions\AiVideoPro\System;
 
 use App\Extensions\AiVideoPro\System\Http\Controllers\AiVideoProController;
-use App\Extensions\AiVideoPro\System\Http\Controllers\FalAISettingController;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Routing\Router;
 use Illuminate\Support\Facades\Route;
@@ -60,13 +59,6 @@ class AiVideoProServiceProvider extends ServiceProvider
                                 $router->resource('ai-video-pro', AiVideoProController::class)->except('destroy', 'show');
                                 $router->get('ai-video-pro-delete/{id}', [AiVideoProController::class, 'delete'])->name('ai-video-pro.delete');
                                 $router->get('ai-video-pro-check', [AiVideoProController::class, 'checkVideoStatus'])->name('ai-video-pro.check');
-                            });
-                        $router->controller(FalAISettingController::class)
-                            ->prefix('admin/settings')
-                            ->middleware('admin')
-                            ->name('admin.settings.')->group(function (Router $router) {
-                                $router->get('fal-ai', 'index')->name('fal-ai');
-                                $router->post('fal-ai', 'update')->name('fal-ai.update');
                             });
                     });
             });

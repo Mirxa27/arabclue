@@ -46,7 +46,7 @@
 />
 <script src="{{ custom_theme_url('/assets/libs/prism/prism.js') }}"></script>
 <script src="{{ custom_theme_url('/assets/libs/beautify-html.min.js') }}"></script>
-<script src="{{ custom_theme_url('/assets/libs/markdown-it.min.js') }}"></script>
+<script src="{{ custom_theme_url('/assets/libs/markdownit/markdown-it.min.js') }}"></script>
 <script src="{{ custom_theme_url('/assets/libs/turndown.js') }}"></script>
 <script src="{{ custom_theme_url('/assets/libs/picmo/picmo.min.js') }}"></script>
 <script

@@ -24,6 +24,7 @@ class DemoDataController
             ],
             'connected_at' => now(),
             'expires_at'   => now()->addDays(100),
+            'followers_count' => 25000,
         ]);
 
         SocialMediaPlatform::query()->updateOrCreate([
@@ -43,6 +44,7 @@ class DemoDataController
             ],
             'connected_at' => now(),
             'expires_at'   => now()->addDays(10),
+            'followers_count' => 15000,
         ]);
 
         $page = [];
@@ -64,6 +66,7 @@ class DemoDataController
             ],
             'connected_at' => now(),
             'expires_at'   => now()->addDays(10),
+            'followers_count' => 32000,
         ]);
 
         $userData = [];
@@ -85,6 +88,7 @@ class DemoDataController
             ],
             'connected_at' => now(),
             'expires_at'   => now()->addDays(10),
+            'followers_count' => 18000,
         ]);
 
         SocialMediaPlatform::query()->updateOrCreate([
@@ -104,6 +108,7 @@ class DemoDataController
             ],
             'connected_at' => now(),
             'expires_at'   => now()->addDays(10),
+            'followers_count' => 22000,
         ]);
     }
 }

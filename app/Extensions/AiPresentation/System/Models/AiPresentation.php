@@ -39,6 +39,9 @@ class AiPresentation extends Model
     public function getTotalPagesAttribute(): int
     {
         $pdf = public_path($this->pdf_url);
+        if (! file_exists($pdf)) {
+            return 0;
+        }
         $content = file_get_contents($pdf);
         $matches = [];
         preg_match_all('/\/Count\s+(\d+)/', $content, $matches);

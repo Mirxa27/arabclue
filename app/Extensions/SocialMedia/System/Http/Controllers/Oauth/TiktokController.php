@@ -4,6 +4,7 @@ namespace App\Extensions\SocialMedia\System\Http\Controllers\Oauth;
 
 use App\Extensions\SocialMedia\System\Enums\PlatformEnum;
 use App\Extensions\SocialMedia\System\Helpers\Tiktok;
+use App\Extensions\SocialMedia\System\Http\Controllers\Oauth\Traits\HasBackRoute;
 use App\Extensions\SocialMedia\System\Models\SocialMediaPlatform;
 use App\Helpers\Classes\Helper;
 use App\Http\Controllers\Controller;
@@ -13,11 +14,13 @@ use Illuminate\Support\Facades\Auth;
 
 class TiktokController extends Controller
 {
+    use HasBackRoute;
+
     public function __construct(public Tiktok $api) {}
 
     private function cacheKey(): string
     {
-        return 'platforms.' . Auth::id() . '.facebook';
+        return 'platforms.' . Auth::id() . '.tiktok';
     }
 
     public function redirect(Request $request)
@@ -28,6 +31,8 @@ class TiktokController extends Controller
                 'message' => trans('This feature is disabled in demo mode.'),
             ]);
         }
+
+        $this->setBackCacheRoute();
 
         if ($request->has('platform_id') && $request->get('platform_id')) {
             cache()->remember($this->cacheKey(), 60, function () use ($request) {
@@ -110,7 +115,7 @@ class TiktokController extends Controller
             $this->setProfileInfo($item);
         }
 
-        return $this->redirectToPlatforms('success', 'Linkedin account connected successfully.');
+        return $this->redirectToPlatforms('success', 'Tiktok account connected successfully.');
     }
 
     protected function setProfileInfo(SocialMediaPlatform $item): void
@@ -129,6 +134,31 @@ class TiktokController extends Controller
             $creatorInfo = $creatorInfoData['data'] ?? [];
         }
 
+        $followersCount = (int) (
+            data_get($creatorInfo, 'follower_count')
+            ?? data_get($creatorInfo, 'followers_count')
+            ?? data_get($creatorInfo, 'fan_count')
+            ?? data_get($creatorInfo, 'fans_count')
+            ?? 0
+        );
+
+        if ($followersCount === 0) {
+            $accountInfo = $this->api->getAccountInfo([
+                'open_id',
+                'follower_count',
+                'followers_count',
+                'fan_count',
+            ])->json('data.user', []);
+
+            $followersCount = (int) (
+                data_get($accountInfo, 'follower_count')
+                ?? data_get($accountInfo, 'followers_count')
+                ?? data_get($accountInfo, 'fan_count')
+                ?? data_get($accountInfo, 'fans_count')
+                ?? 0
+            );
+        }
+
         $item->update([
             'credentials' => array_merge($item->credentials, [
                 'name'     => $creatorInfo['creator_nickname'] ?? '',
@@ -136,12 +166,13 @@ class TiktokController extends Controller
                 'picture'  => $creatorInfo['creator_avatar_url'] ?? '',
                 'meta'     => $creatorInfo ?? [],
             ]),
+            'followers_count' => $followersCount,
         ]);
     }
 
-    public function redirectToPlatforms(string $type = 'success', string $message = 'Linkedin account connected successfully.'): RedirectResponse
+    public function redirectToPlatforms(string $type = 'success', string $message = 'Tiktok account connected successfully.'): RedirectResponse
     {
-        return to_route('dashboard.user.social-media.platforms')->with([
+        return to_route($this->getBackCacheRoute())->with([
             'type'    => $type,
             'message' => trans($message),
         ]);

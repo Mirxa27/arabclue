@@ -357,7 +357,7 @@
 										type="file"
 										:accept="input.accept"
 										:multiple="input.multiple"
-										:required="input.required"
+										:data-required="input.required"
 										@change="handleFileSelect(input.name.replace(/[\[\]]/g, '_'))"
 								/>
 							</label>
@@ -566,3 +566,65 @@
 		@endif
 	</form>
 </x-card>
+
+<script>
+	document.addEventListener('DOMContentLoaded', function() {
+		const form = document.getElementById('photo-studio-form');
+
+		if (form) {
+			form.addEventListener('submit', function(e) {
+				// Find all file inputs with data-required attribute
+				const fileInputs = form.querySelectorAll('input[type="file"][data-required="true"]');
+
+				let hasError = false;
+
+				fileInputs.forEach(input => {
+					// Check if the input's container is visible (part of current feature)
+					const container = input.closest('[x-show]');
+					const isVisible = !container || container.style.display !== 'none';
+
+					if (isVisible) {
+						// Check if file is selected
+						if (!input.files || input.files.length === 0) {
+							if (!hasError) { // Only prevent once and show first error
+								e.preventDefault();
+								e.stopPropagation();
+								hasError = true;
+
+								// Get label text
+								const labelElement = input.closest('.flex')?.querySelector('label.text-xs');
+								const labelText = labelElement?.textContent?.trim() || 'a file';
+
+								// Show user-friendly alert
+								toastr.error(`Please select ${labelText} before generating.`);
+
+								// Scroll to the file input
+								const scrollTarget = input.closest('.flex') || input.closest('div');
+								scrollTarget?.scrollIntoView({
+									behavior: 'smooth',
+									block: 'center'
+								});
+
+								// Highlight the drop zone
+								const dropZone = input.closest('label.lqd-filepicker-label');
+								if (dropZone) {
+									dropZone.style.borderColor = '#ef4444';
+									dropZone.style.backgroundColor = '#fef2f2';
+
+									setTimeout(() => {
+										dropZone.style.borderColor = '';
+										dropZone.style.backgroundColor = '';
+									}, 3000);
+								}
+							}
+						}
+					}
+				});
+
+				if (hasError) {
+					return false;
+				}
+			});
+		}
+	});
+</script>

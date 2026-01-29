@@ -4,6 +4,9 @@ namespace App\Extensions\SocialMedia\System\Models;
 
 use App\Extensions\SocialMedia\System\Enums\PlatformEnum;
 use App\Extensions\SocialMedia\System\Enums\StatusEnum;
+use App\Extensions\SocialMediaAgent\System\Models\SocialMediaAgent;
+use App\Extensions\SocialMediaAgent\System\Models\SocialMediaAgentPost;
+use App\Helpers\Classes\MarketplaceHelper;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -14,6 +17,8 @@ class SocialMediaPost extends Model
     protected $table = 'ext_social_media_posts';
 
     protected $fillable = [
+        'agent_id',
+        'social_media_agent_post_id',
         'user_id',
         'post_id',
         'company_id',
@@ -34,15 +39,23 @@ class SocialMediaPost extends Model
         'status',
         'scheduled_at',
         'posted_at',
+        'hashtags',
+        'post_metrics',
+        'post_engagement_count',
+        'post_engagement_rate',
+        'post_metric_at',
     ];
 
     protected $casts = [
-        'social_media_platform' => PlatformEnum::class,
-        'has_replicate'         => 'boolean',
-        'status'                => StatusEnum::class,
-        'scheduled_at'          => 'datetime',
-        'repeat_start_date'     => 'datetime:Y-m-d',
-        'posted_at'             => 'datetime',
+        'social_media_platform'      => PlatformEnum::class,
+        'has_replicate'              => 'boolean',
+        'status'                     => StatusEnum::class,
+        'scheduled_at'               => 'datetime',
+        'repeat_start_date'          => 'datetime:Y-m-d',
+        'posted_at'                  => 'datetime',
+        'hashtags'                   => 'json',
+        'post_metrics'               => 'json',
+        'social_media_agent_post_id' => 'integer',
     ];
 
     protected $appends = [
@@ -95,5 +108,41 @@ class SocialMediaPost extends Model
     public function logs(): HasMany
     {
         return $this->hasMany(SocialMediaSharedLog::class, 'social_media_post_id');
+    }
+
+    public function agent(): BelongsTo
+    {
+        return $this->belongsTo(SocialMediaAgent::class, 'agent_id');
+    }
+
+    public function agentPost(): BelongsTo
+    {
+        return $this->belongsTo(SocialMediaAgentPost::class, 'social_media_agent_post_id');
+    }
+
+    public function agentPostPublished(?string $platformPostId = null): void
+    {
+        if ($this->social_media_agent_post_id && MarketplaceHelper::isRegistered('social-media-agent')) {
+            $agentPost = \App\Extensions\SocialMediaAgent\System\Models\SocialMediaAgentPost::query()
+                ->where('id', $this->post->social_media_agent_post_id)
+                ->first();
+
+            if ($agentPost) {
+                $agentPost->markAsPublished($platformPostId);
+            }
+        }
+    }
+
+    public function agentPostFailed(string $errorMessage): void
+    {
+        if ($this->social_media_agent_post_id && MarketplaceHelper::isRegistered('social-media-agent')) {
+            $agentPost = \App\Extensions\SocialMediaAgent\System\Models\SocialMediaAgentPost::query()
+                ->where('id', $this->post->social_media_agent_post_id)
+                ->first();
+
+            if ($agentPost) {
+                $agentPost->markAsFailed($errorMessage);
+            }
+        }
     }
 }

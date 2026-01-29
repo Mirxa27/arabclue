@@ -45,7 +45,7 @@
 
                     videoResultTemplate.querySelector(".video-result").classList.remove("lqd-is-loading");
                     videoResultTemplate.querySelector(".video-result").setAttribute("data-id", res.video
-                    .id);
+                        .id);
                     videoResultTemplate.querySelector(".lqd-video-result-video source").setAttribute("src",
                         res.video.output);
                     videoResultTemplate.querySelector(".lqd-video-result-view").setAttribute("data-payload",
@@ -237,11 +237,11 @@
                             imageResultTemplate.querySelector(".image-result").classList
                                 .remove("lqd-is-loading");
                             imageResultTemplate.querySelector(".image-result").setAttribute(
-                                "data-generator", image.response == "SD" ? "sd" : "de");
+                                "data-generator", image.response.substr(0, 2).toLowerCase());
                             imageResultTemplate.querySelector(".lqd-image-result-img")
                                 .setAttribute("src", image.output);
                             imageResultTemplate.querySelector(".lqd-image-result-type")
-                                .innerHTML = image.response == "SD" ? "SD" : "DE";
+                                .innerHTML = image.response.substr(0, 2).toUpperCase();
                             imageResultTemplate.querySelector(".lqd-image-result-view")
                                 .setAttribute("data-payload", JSON.stringify(image));
 
@@ -302,7 +302,7 @@
                                 codePre.querySelectorAll("pre").forEach(pre => {
                                     pre.classList.add(
                                         `language-${ codeLang && codeLang.value !== "" ? codeLang.value : "javascript" }`
-                                        );
+                                    );
                                 });
 
                                 // saving for copy

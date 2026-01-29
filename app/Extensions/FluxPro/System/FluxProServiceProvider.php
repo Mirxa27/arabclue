@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Extensions\FluxPro\System;
 
-use App\Extensions\FluxPro\System\Http\Controllers\FalAISettingController;
 use App\Extensions\FluxPro\System\Http\Controllers\FalAIWebhookController;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Routing\Router;
@@ -46,14 +45,6 @@ class FluxProServiceProvider extends ServiceProvider
                 $router->any('generator/webhook/fal-ai', FalAIWebhookController::class)
                     ->name('generator.webhook.fal-ai')
                     ->withoutMiddleware(['web', 'auth']);
-
-                $router->controller(FalAISettingController::class)
-                    ->prefix('dashboard/admin/settings')
-                    ->middleware(['auth', 'admin'])
-                    ->name('dashboard.admin.settings.')->group(function (Router $router) {
-                        $router->get('fal-ai', 'index')->name('fal-ai');
-                        $router->post('fal-ai', 'update')->name('fal-ai.update');
-                    });
 
             });
     }

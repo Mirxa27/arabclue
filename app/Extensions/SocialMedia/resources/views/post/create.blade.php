@@ -98,9 +98,7 @@
                             $is_connected = $platform->platform()?->isConnected();
                             $name = $platform->platform()?->credentials['name'] ?? 'Jhon Doe';
 
-                            $profileImage =
-                                $platform->platform()?->credentials['picture'] ??
-                                custom_theme_url('/assets/img/avatars/avatar-1.jpg');
+                            $profileImage = $platform->platform()?->credentials['picture'] ?? custom_theme_url('/assets/img/avatars/avatar-1.jpg');
                         @endphp
 
                         <x-button
@@ -117,13 +115,10 @@
                             @php
                                 $image = 'vendor/social-media/icons/' . $platform->value . '.svg';
                                 $image_dark_version = 'vendor/social-media/icons/' . $platform->value . '-light.svg';
-								$darkImageExists = file_exists(public_path($image_dark_version));
+                                $darkImageExists = file_exists(public_path($image_dark_version));
                             @endphp
                             <img
-                                @class([
-                                    'w-7 h-auto',
-                                    'dark:hidden' => $darkImageExists,
-                                ])
+                                @class(['w-7 h-auto', 'dark:hidden' => $darkImageExists])
                                 src="{{ asset($image) }}"
                                 alt="{{ $platform->name }}"
                             />
@@ -251,8 +246,10 @@
                                     >
                                         <x-slot:trigger
                                             class="w-full flex-wrap rounded-xl"
-                                            ::class="{ 'bg-primary text-primary-foreground outline-primary': selectedCompany &&
-                                                    selectedProduct }"
+                                            ::class="{
+                                                'bg-primary text-primary-foreground outline-primary': selectedCompany &&
+                                                    selectedProduct
+                                            }"
                                             variant="outline"
                                             size="lg"
                                             type="button"
@@ -281,8 +278,11 @@
                                                     'hidden' => !filled($company_id) || !filled($product_id),
                                                     'inline-grid' => filled($company_id) && filled($product_id),
                                                 ])
-                                                :class="{ hidden: !selectedCompany || !
-                                                    selectedProduct, 'inline-grid': selectedCompany && selectedProduct }"
+                                                :class="{
+                                                    hidden: !selectedCompany || !
+                                                        selectedProduct,
+                                                    'inline-grid': selectedCompany && selectedProduct
+                                                }"
                                                 aria-hidden="true"
                                             >
                                                 <x-tabler-check class="size-4" />
@@ -802,7 +802,7 @@
 @endsection
 
 @push('script')
-    <script src="{{ custom_theme_url('/assets/libs/markdown-it.min.js') }}"></script>
+    <script src="{{ custom_theme_url('/assets/libs/markdownit/markdown-it.min.js') }}"></script>
     <script src="{{ custom_theme_url('/assets/js/format-string.js') }}"></script>
     <script src="{{ custom_theme_url('/assets/libs/datepicker/air-datepicker.js') }}"></script>
     <script src="{{ custom_theme_url('/assets/libs/datepicker/locale/en.js') }}"></script>
@@ -858,7 +858,7 @@
                     async postNow() {
                         let form = this.$refs.form;
                         let formData = new FormData(
-                        form); // Formu serialize etmeden direkt kullanıyoruz
+                            form); // Formu serialize etmeden direkt kullanıyoruz
                         formData.append('post_now', 1);
                         formData.append('social_media_platform', this.currentPlatform);
                         try {
@@ -893,7 +893,7 @@
 
                         let form = this.$refs.form;
                         let formData = new FormData(
-                        form); // Formu serialize etmeden direkt kullanıyoruz
+                            form); // Formu serialize etmeden direkt kullanıyoruz
                         formData.append('post_now', 0);
                         formData.append('social_media_platform', this.currentPlatform);
                         try {
@@ -980,14 +980,14 @@
                                 toastr.error(data.message ?? '{{ __('Expected data not returned from server') }}');
                             }
                         } catch (error) {
-							toastr.error('{{ __('Error occurred while uploading the image') }}');
+                            toastr.error('{{ __('Error occurred while uploading the image') }}');
                         }
                     },
                     async generateVideo() {
                         if (!this.content || !this.content.trim().length) {
                             return toastr.error(
                                 '{{ __('Please enter some content before generating an video.') }}'
-                                );
+                            );
                         }
 
                         const formData = new FormData();
@@ -1057,7 +1057,7 @@
                         if (!this.content || !this.content.trim().length) {
                             return toastr.error(
                                 '{{ __('Please enter some content before generating an image.') }}'
-                                );
+                            );
                         }
 
                         const prompt =
@@ -1165,7 +1165,7 @@
 
                         if (!this.content || !this.content.trim().length) {
                             return toastr.error(
-                            '{{ __('Please enter some content first.') }}');
+                                '{{ __('Please enter some content first.') }}');
                         }
 
                         const formData = new FormData();

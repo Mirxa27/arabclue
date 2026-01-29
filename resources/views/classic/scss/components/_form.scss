@@ -3,9 +3,11 @@
 	.lqd-input {
 		@apply rounded focus:border-primary focus:ring-primary focus:ring-1;
 	}
+
 	.lqd-input-lg {
 		@apply h-12;
 	}
+
 	.lqd-input-switcher {
 		border-radius: 9999px !important;
 	}
@@ -20,6 +22,7 @@
 	.lqd-chat-record-stop-trigger {
 		@apply rounded;
 	}
+
 	.lqd-input {
 		@apply focus:border-transparent focus:ring-transparent;
 	}
